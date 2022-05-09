@@ -1,10 +1,12 @@
+from pydoc import describe
 import dxpy
 import pandas as pd
 from DNAnexus_auth_token import token
 import requests
 import re
-import os
+import sys, os
 import datetime
+import time
 import config
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -199,7 +201,7 @@ def send_email(to, email_subject, email_message):
         )
     )
 
-# Create a Class for Projects
+
 class Projects:
     def __init__(self, proj_type, pattern, length):
         self.type = proj_type #SNP, WES, MokaPipe or TSO500
@@ -222,7 +224,7 @@ class Projects:
         log.info(message)
         return message
 
-#Create a Class for One Prject
+
 class Project:
     def __init__(self, proj):
         self.id = proj.get("id")
@@ -251,7 +253,7 @@ class Project:
         return message
 
         
-# WES Project
+
 class WES(Project):
     proj_type = "WES"
     folder = "/WES/"
@@ -269,7 +271,6 @@ class WES(Project):
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
 
-# SNP Project
 class SNP(Project):
     proj_type = "SNP"
     folder = "/SNP/"
@@ -288,7 +289,7 @@ class SNP(Project):
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
 
-# MokaPipe Project
+
 class MokaPipe(Project):
     proj_type = "MokaPipe"
     folder = "/MokaPipe/"
@@ -312,7 +313,6 @@ class MokaPipe(Project):
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
 
-# TSO500 Project
 class TSO(Project):
     proj_type = "TSO500"
     folder = "/TSO500/"
@@ -334,7 +334,6 @@ class TSO(Project):
         text = python3 + " H:\\Tickets\\scripts\\process_TSO.py " + results_filepath + " " + coverage_filepath
         html = template.render(copy_text=text)
         send_email(config.test, subject, html)
-        log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
 
 
@@ -386,12 +385,5 @@ if __name__ == "__main__":
                         project.message2()
         else:
             projects.no_projects_found(proj_type)            
-    archive_after7days("/SNP")
-    archive_after7days("/MokaPipe")
-    archive_after7days("/TSO500")
-    archive_after7days("/WES")
-    log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-    log.info(f"Script finished running!")
-
-
+    archive_after7days
 
