@@ -26,7 +26,8 @@ env = Environment(
     autoescape=select_autoescape(["html"])
 )
 template = env.get_template("email.html")
-python3 = "S:\Genetics_Data2\Array\Software\Python-3.6.5\python"
+python3 = "S:\\Genetics_Data2\\Array\\Software\\Python-3.6.5\\python"
+duty_bio_scripts = "S:\\Genetics_Data2\\Array\\Software\\duty_bioinformatician_scripts"
 
 LOG_FILENAME = datetime.datetime.now().strftime('%d_%m_%Y_%H_%M_%S_automate_duty_tasks.log')
 
@@ -36,34 +37,13 @@ log.info("test")
 log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
 log.info("test2")
 
-def download(url: str, dest_folder: str):
-    """
-    Download function for Clinvar vcf files if not already present
-    """
-    if not os.path.exists(dest_folder):
-        os.makedirs(dest_folder)  # create folder if it does not exist
-    #
-    filename = url.split("/")[-1].replace(" ", "_")  # be careful with file names
-    file_path = os.path.join(dest_folder, filename)
-    #
-    r = requests.get(url, stream=True)
-    if r.ok:
-        print("saving to", os.path.abspath(file_path))
-        with open(file_path, "wb") as f:
-            for chunk in r.iter_content(chunk_size=1024 * 8):
-                if chunk:
-                    f.write(chunk)
-                    f.flush()
-                    os.fsync(f.fileno())
-    else:  # HTTP status code 4XX/5XX
-        print("Download failed: status code {}\n{}".format(r.status_code, r.text))
 
 
 # generate download link for DNAnexus object
 def download_url(file_ID, project_ID):
     dxfile = dxpy.DXFile(file_ID)
     download_link = dxfile.get_download_url(
-        duration=82800,
+        duration=60*60*24*5, # 60 sec x 60 min x 24 hours * 5 days 
         preauthenticated=True,
         project=project_ID,
     )
@@ -206,10 +186,10 @@ class Projects:
         self.data = find_projects(pattern, length)
         self.time = length
 
-    def find_previouse_files(folder):
+    def find_previouse_files(self):
         projects_csv = {}
-        files = (file for file in os.listdir(cur_path+folder) 
-            if os.path.isfile(os.path.join(cur_path+folder, file)))
+        files = (file for file in os.listdir(cur_path+self.type) 
+            if os.path.isfile(os.path.join(cur_path+self.type, file)))
         for filename in files:
             project = pattern.search(filename)[1]
             projects_csv[project]={}
@@ -228,6 +208,7 @@ class Project:
         self.id = proj.get("id")
         self.name = proj.get("describe").get("name")
         self.jobs = find_project_executions(proj.get("id"))
+        self.project_name = find_project_name(proj.get("id"))
 
     def message1(self):
         message = f"csv file for this project already created: { self.name }"
@@ -263,8 +244,8 @@ class WES(Project):
         filepath = cur_path + self.folder + self.id + "__"+  self.name + "_chanjo_txt.csv"
         download_links.to_csv(filepath, index=False, sep=",")
         subject = "WES run: " + self.name
-        text = python3 + " H:\\Tickets\\scripts\\process_WES.py " + filepath
-        html = template.render(copy_text=text)
+        text = python3 + " " + duty_bio_scripts +"\\process_WES.py " + filepath
+        html = template.render(copy_text=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.project_name)
         send_email(config.test, subject, html)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
@@ -282,8 +263,8 @@ class SNP(Project):
         filepath = cur_path + self.folder  + self.id + "__"+  self.name + "_VCFs.csv"
         download_links.to_csv(filepath, index=False, sep=",")
         subject = "SNP run: " + self.name
-        text = python3 + " H:\\Tickets\\scripts\\process_SNP.py " + filepath
-        html = template.render(copy_text=text)
+        text = python3+ " " + duty_bio_scripts +"\\process_SNP.py " + filepath
+        html = template.render(copy_text=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.project_name)
         send_email(config.test, subject, html)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
@@ -306,8 +287,8 @@ class MokaPipe(Project):
         download_RPKM_links.to_csv(RPKM_filepath, index=False, sep=",")
         download_coverage_links.to_csv(coverage_filepath, index=False, sep=",")
         subject = "TSO500 run: " + self.name
-        text = python3 + " H:\\Tickets\\scripts\\process_TSO.py " + RPKM_filepath + " " + coverage_filepath
-        html = template.render(copy_text=text)
+        text = python3 + " " + duty_bio_scripts +"\\process_TSO.py " + RPKM_filepath + " " + coverage_filepath
+        html = template.render(copy_text=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.project_name)
         send_email(config.test, subject, html)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
@@ -331,8 +312,8 @@ class TSO(Project):
         download_results_links.to_csv(results_filepath, index=False, sep=",")
         download_coverage_links.to_csv(coverage_filepath, index=False, sep=",")
         subject = "TSO500 run: " + self.name
-        text = python3 + " H:\\Tickets\\scripts\\process_TSO.py " + results_filepath + " " + coverage_filepath
-        html = template.render(copy_text=text)
+        text = python3 + " " + duty_bio_scripts +"\\process_TSO.py " + results_filepath + " " + coverage_filepath
+        html = template.render(copy_text=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.project_name)
         send_email(config.test, subject, html)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
@@ -359,7 +340,7 @@ if __name__ == "__main__":
         projects = Projects(proj_type,patterns[proj_type],length) 
         print(f"the project is: { proj_type }") 
         if projects.data:
-            prev_proj_csv = Projects.find_previouse_files(proj_type)
+            prev_proj_csv = Projects.find_previouse_files()
             print(prev_proj_csv)
             for item in projects.data:
                 if proj_type == "/SNP":

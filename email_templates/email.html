@@ -355,8 +355,14 @@
                     <tr>
                       <td>
                         <p>Dear Duty Bioinformatician,</p>
-                        <p>The following recent projects have been found.</p>
-                        <p>Please follow the following instructions to insert the data in the correct place.</p>
+                        <p>The following recent project has been found and requires processing:</p>
+                        <p> {{ project_name }} </p>
+                        <br>
+                        <p>Please follow the following instructions:</p>
+                        <br>
+                        <p>Open a command prompt on the trust PC or Citrix</p>
+                        <p>(type cmd in the Desktop navigation bar and hit enter)</p>
+                        <p>Copy and paste the following text:</p>
                         <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
                           <tbody>
                             <tr>
@@ -375,8 +381,11 @@
                             </tr>
                           </tbody>
                         </table>
-                        <p> Number of jobs found for this project: {{ num_jobs }} </p>
-                        <p> Summary of the jobs: {{ jobs_executed }} </p>
+                        <p>Please follow any addiontal instructions when requested by the command prompt.</p>
+                        <br>
+                        <p>Additional information</p>
+                        <p>Number of jobs found for this project: {{ num_jobs }} </p>
+                        <p>Summary of the jobs: {{ jobs_executed }} </p>
                         <br>
                         <p>Good luck!</p>
                         <p>Hope it works.</p>
