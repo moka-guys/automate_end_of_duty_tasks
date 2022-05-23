@@ -105,13 +105,6 @@ def create_download_links(project_data):
     )
 
 
-def download_SNP_vcfs(df):
-    for i in range(0, len(df)):
-        download(
-            df["url"][i],
-            dest_folder="/media/igor/B08E-849B/home/automate_end_of_run_tasks/SNP",
-        )
-
 # find project name using unique project id
 def find_project_name(project_id):
     project_data = dxpy.bindings.dxproject.DXProject(dxid=project_id)
@@ -121,13 +114,6 @@ def find_project_description(project_id):
     project_data = dxpy.bindings.dxproject.DXProject(dxid=project_id)
     return project_data.describe()
 
-
-def download_NGS_coverage(df):
-    for i in range(0, len(df)):
-        download(
-            df["url"][i],
-            dest_folder="/media/igor/B08E-849B/home/automate_end_of_run_tasks/NGS_coverage",
-        )
 
 def archive_after7days(folder):
     today = datetime.date.today()
