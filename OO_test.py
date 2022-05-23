@@ -1,16 +1,18 @@
+from pydoc import describe
 import dxpy
 import pandas as pd
 from DNAnexus_auth_token import token
+import requests
 import re
-import os
+import sys, os
 import datetime
+import time
 import config
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from jinja2 import Environment, select_autoescape, FileSystemLoader
+from jinja2 import Environment, PackageLoader, select_autoescape, FileSystemLoader
 from mokaguys_logger import log_setup, logging
-from tqdm import tqdm
 
 """
 Automate End of Duty Tasks
@@ -26,21 +28,44 @@ env = Environment(
     autoescape=select_autoescape(["html"])
 )
 template = env.get_template("email.html")
-python3 = "S:\\Genetics_Data2\\Array\\Software\\Python-3.6.5\\python"
-duty_bio_scripts = "S:\\Genetics_Data2\\Array\\Software\\duty_bioinformatician_scripts"
+python3 = "S:\Genetics_Data2\Array\Software\Python-3.6.5\python"
 
 LOG_FILENAME = datetime.datetime.now().strftime('%d_%m_%Y_%H_%M_%S_automate_duty_tasks.log')
 
 log_setup(cur_path + '/LOG/' + LOG_FILENAME)
+log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
+log.info("test")
+log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
+log.info("test2")
+
+def download(url: str, dest_folder: str):
+    """
+    Download function for Clinvar vcf files if not already present
+    """
+    if not os.path.exists(dest_folder):
+        os.makedirs(dest_folder)  # create folder if it does not exist
+    #
+    filename = url.split("/")[-1].replace(" ", "_")  # be careful with file names
+    file_path = os.path.join(dest_folder, filename)
+    #
+    r = requests.get(url, stream=True)
+    if r.ok:
+        print("saving to", os.path.abspath(file_path))
+        with open(file_path, "wb") as f:
+            for chunk in r.iter_content(chunk_size=1024 * 8):
+                if chunk:
+                    f.write(chunk)
+                    f.flush()
+                    os.fsync(f.fileno())
+    else:  # HTTP status code 4XX/5XX
+        print("Download failed: status code {}\n{}".format(r.status_code, r.text))
+
 
 # generate download link for DNAnexus object
 def download_url(file_ID, project_ID):
-    '''
-    Create a url for a file in DNAnexus
-    '''
     dxfile = dxpy.DXFile(file_ID)
     download_link = dxfile.get_download_url(
-        duration=60*60*24*5, # 60 sec x 60 min x 24 hours * 5 days 
+        duration=82800,
         preauthenticated=True,
         project=project_ID,
     )
@@ -49,9 +74,6 @@ def download_url(file_ID, project_ID):
 
 # find data based on the name of the file
 def find_project_data(project_id, _folder, filename):
-    '''
-    Search DNAnexus to find files based on a regexp pattern
-    '''
     data = list(
         dxpy.bindings.search.find_data_objects(
             project=project_id, name=filename, name_mode="regexp", describe=True, folder=_folder
@@ -62,9 +84,6 @@ def find_project_data(project_id, _folder, filename):
 
 # find data based on the name of the file
 def find_projects(project_name, _length):
-    '''
-    Search DNAnexus to find projects based on regex pattern and amount of time from now
-    '''
     data = list(
         dxpy.bindings.search.find_projects(
             name=project_name,
@@ -78,9 +97,6 @@ def find_projects(project_name, _length):
 
 
 def find_project_executions(project_id):
-    '''
-    Find number of executions/jobs for a given project and retrieve outcomes of the jobs e.g. done, running, failed etc.
-    '''
     data = list(
         dxpy.bindings.search.find_executions(
             project=project_id, 
@@ -97,11 +113,8 @@ def find_project_executions(project_id):
 
 
 def create_download_links(project_data):
-    '''
-    Generate URL links from a list of data and produce a pandas dataframe
-    '''
     data = []
-    for object in tqdm(project_data):
+    for object in project_data:
         file_name = object.get("describe").get("name")
         folder = object.get("describe").get("folder")
         object_id = object.get("id")
@@ -114,42 +127,33 @@ def create_download_links(project_data):
     )
 
 
+def download_SNP_vcfs(df):
+    for i in range(0, len(df)):
+        download(
+            df["url"][i],
+            dest_folder="/media/igor/B08E-849B/home/automate_end_of_run_tasks/SNP",
+        )
+
 # find project name using unique project id
 def find_project_name(project_id):
-    '''
-    Find the name of a project using the project id
-    '''
     project_data = dxpy.bindings.dxproject.DXProject(dxid=project_id)
     return project_data.describe().get("name")
 
 def find_project_description(project_id):
-    '''
-    Find the description of the project
-    '''
     project_data = dxpy.bindings.dxproject.DXProject(dxid=project_id)
     return project_data.describe()
 
-def find_previouse_files(folder):
-    '''
-    Find previously generates CSV files to determine if the project needs processing
-    '''
-    projects_csv = {}
-    for filename in os.listdir(cur_path+folder):
-        try:
-            project = pattern.search(filename)[1]
-        except:
-            project = ''
-        projects_csv[project]={}
-    return projects_csv
+
+def download_NGS_coverage(df):
+    for i in range(0, len(df)):
+        download(
+            df["url"][i],
+            dest_folder="/media/igor/B08E-849B/home/automate_end_of_run_tasks/NGS_coverage",
+        )
 
 def archive_after7days(folder):
-    '''
-    Archive CSV after seven days
-    '''
     today = datetime.date.today()
-    files = (file for file in os.listdir(cur_path+folder) 
-        if os.path.isfile(os.path.join(cur_path+folder, file)))
-    for filename in files:
+    for filename in os.listdir(cur_path+folder):
         project = pattern.search(filename)[1]
         date_modified = datetime.date.fromtimestamp(find_project_description(project).get("modified")/1000)
         _delta = today - date_modified
@@ -157,6 +161,12 @@ def archive_after7days(folder):
         if _delta.days > 7:
             os.replace(cur_path+folder+"/"+filename, cur_path+folder+"/archive/"+filename)
 
+def find_previouse_files(folder):
+    projects_csv = {}
+    for filename in os.listdir(cur_path+folder):
+        project = pattern.search(filename)[1]
+        projects_csv[project]={}
+    return projects_csv
 
 def send_email(to, email_subject, email_message):
     """
@@ -184,37 +194,44 @@ def send_email(to, email_subject, email_message):
     server.ehlo()
     server.login(config.user, config.pw)
     server.sendmail(config.me, to, m.as_string())
+    # write to logfile
+    log.info(
+        "UA_pass Email sent to {}. Subject {}".format(
+            to, email_subject
+        )
+    )
 
 
-# Create a Class for Projects
 class Projects:
     def __init__(self, proj_type, pattern, length):
         self.type = proj_type #SNP, WES, MokaPipe or TSO500
         self.data = find_projects(pattern, length)
         self.time = length
 
+    def find_previouse_files(folder):
+        projects_csv = {}
+        files = (file for file in os.listdir(cur_path+folder) 
+            if os.path.isfile(os.path.join(cur_path+folder, file)))
+        for filename in files:
+            project = pattern.search(filename)[1]
+            projects_csv[project]={}
+        return projects_csv
+
     def no_projects_found(self, proj_type):
-        '''
-        Log message that NO projects have been found in the time frame specified
-        '''
-        message = f"NO { proj_type } projects were found in time frame specified: { self.time }"
+        message = f"no { proj_type } projects were found in time frame specified: { self.time }"
         print(message)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(message)
         return message
 
-#Create a Class for One Prject
+
 class Project:
     def __init__(self, proj):
         self.id = proj.get("id")
         self.name = proj.get("describe").get("name")
         self.jobs = find_project_executions(proj.get("id"))
-        self.project_name = find_project_name(proj.get("id"))
 
     def message1(self):
-        '''
-        Log message that the project has been previously porcessed
-        '''
         message = f"csv file for this project already created: { self.name }"
         print(message)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
@@ -222,9 +239,6 @@ class Project:
         return message
     
     def message2(self, proj_type):
-        '''
-        Log message that one or more projects are running
-        '''
         message = f"one or more jobs are running for { proj_type } project: { self.name }"
         print(message)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
@@ -232,9 +246,6 @@ class Project:
         return message
 
     def message3(self, proj_type):
-        '''
-        Log message that no target files have been found for a specific project
-        '''
         message = f"no files were found for { proj_type } project: { self.name }"
         print(message)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
@@ -242,49 +253,43 @@ class Project:
         return message
 
         
-# WES Project
+
 class WES(Project):
     proj_type = "WES"
     folder = "/WES/"
     def data(self):
-        '''
-        Find the files needed for processing using regex pattern
-        '''
         data = find_project_data(self.id,"/coverage", "\S+.chanjo_txt$") 
         return data
     def make_csv_and_email(self, list):
-        '''
-        Create CSV and send email
-        '''
         download_links = create_download_links(list)
         filepath = cur_path + self.folder + self.id + "__"+  self.name + "_chanjo_txt.csv"
         download_links.to_csv(filepath, index=False, sep=",")
         subject = "WES run: " + self.name
-        text = python3 + " " + duty_bio_scripts +"\\process_WES.py " + filepath
-        html = template.render(copy_text=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.project_name)
+        text = python3 + " H:\\Tickets\\scripts\\process_WES.py " + filepath
+        html = template.render(copy_text=text)
         send_email(config.test, subject, html)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
 
-# SNP Project
 class SNP(Project):
     proj_type = "SNP"
     folder = "/SNP/"
     def data(self):
         data = find_project_data(self.id, "/Output", "\S+.sites_present_reheader_filtered_normalised.vcf$")
+        print(data)
         return data
     def make_csv_and_email(self, list):
         download_links = create_download_links(list)
         filepath = cur_path + self.folder  + self.id + "__"+  self.name + "_VCFs.csv"
         download_links.to_csv(filepath, index=False, sep=",")
         subject = "SNP run: " + self.name
-        text = python3+ " " + duty_bio_scripts +"\\process_SNP.py " + filepath
-        html = template.render(copy_text=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.project_name)
+        text = python3 + " H:\\Tickets\\scripts\\process_SNP.py " + filepath
+        html = template.render(copy_text=text)
         send_email(config.test, subject, html)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
 
-# MokaPipe Project
+
 class MokaPipe(Project):
     proj_type = "MokaPipe"
     folder = "/MokaPipe/"
@@ -302,13 +307,12 @@ class MokaPipe(Project):
         download_RPKM_links.to_csv(RPKM_filepath, index=False, sep=",")
         download_coverage_links.to_csv(coverage_filepath, index=False, sep=",")
         subject = "TSO500 run: " + self.name
-        text = python3 + " " + duty_bio_scripts +"\\process_TSO.py " + RPKM_filepath + " " + coverage_filepath
-        html = template.render(copy_text=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.project_name)
+        text = python3 + " H:\\Tickets\\scripts\\process_TSO.py " + RPKM_filepath + " " + coverage_filepath
+        html = template.render(copy_text=text)
         send_email(config.test, subject, html)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
 
-# TSO500 Project
 class TSO(Project):
     proj_type = "TSO500"
     folder = "/TSO500/"
@@ -327,10 +331,9 @@ class TSO(Project):
         download_results_links.to_csv(results_filepath, index=False, sep=",")
         download_coverage_links.to_csv(coverage_filepath, index=False, sep=",")
         subject = "TSO500 run: " + self.name
-        text = python3 + " " + duty_bio_scripts +"\\process_TSO.py " + results_filepath + " " + coverage_filepath
-        html = template.render(copy_text=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.project_name)
+        text = python3 + " H:\\Tickets\\scripts\\process_TSO.py " + results_filepath + " " + coverage_filepath
+        html = template.render(copy_text=text)
         send_email(config.test, subject, html)
-        log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
 
 
@@ -355,7 +358,7 @@ if __name__ == "__main__":
         projects = Projects(proj_type,patterns[proj_type],length) 
         print(f"the project is: { proj_type }") 
         if projects.data:
-            prev_proj_csv = find_previouse_files(proj_type)
+            prev_proj_csv = Projects.find_previouse_files()
             print(prev_proj_csv)
             for item in projects.data:
                 if proj_type == "/SNP":
@@ -372,7 +375,6 @@ if __name__ == "__main__":
                 if project.id in prev_proj_csv:
                     project.message1()
                 else:
-                    print(f'project id: {project.id} and prev_proj_csc: {prev_proj_csv}')
                     if "running" not in project.jobs and "done" in project.jobs[0]:
                         project_data = project.data()
                         if project_data:
@@ -383,12 +385,5 @@ if __name__ == "__main__":
                         project.message2()
         else:
             projects.no_projects_found(proj_type)            
-    archive_after7days("/SNP")
-    archive_after7days("/MokaPipe")
-    archive_after7days("/TSO500")
-    archive_after7days("/WES")
-    log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-    log.info(f"Script finished running!")
-
-
+    archive_after7days
 
