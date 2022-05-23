@@ -41,6 +41,9 @@ log.info("test2")
 
 # generate download link for DNAnexus object
 def download_url(file_ID, project_ID):
+    '''
+    Create a url for a file in DNAnexus
+    '''
     dxfile = dxpy.DXFile(file_ID)
     download_link = dxfile.get_download_url(
         duration=60*60*24*5, # 60 sec x 60 min x 24 hours * 5 days 
@@ -52,6 +55,9 @@ def download_url(file_ID, project_ID):
 
 # find data based on the name of the file
 def find_project_data(project_id, _folder, filename):
+    '''
+    Search DNAnexus to find files based on a regexp pattern
+    '''
     data = list(
         dxpy.bindings.search.find_data_objects(
             project=project_id, name=filename, name_mode="regexp", describe=True, folder=_folder
@@ -62,6 +68,9 @@ def find_project_data(project_id, _folder, filename):
 
 # find data based on the name of the file
 def find_projects(project_name, _length):
+    '''
+    Search DNAnexus to find projects based on regex pattern and amount of time from now
+    '''
     data = list(
         dxpy.bindings.search.find_projects(
             name=project_name,
@@ -75,6 +84,9 @@ def find_projects(project_name, _length):
 
 
 def find_project_executions(project_id):
+    '''
+    Find number of executions/jobs for a given project and retrieve outcomes of the jobs e.g. done, running, failed etc.
+    '''
     data = list(
         dxpy.bindings.search.find_executions(
             project=project_id, 
@@ -91,6 +103,9 @@ def find_project_executions(project_id):
 
 
 def create_download_links(project_data):
+    '''
+    Generate URL links from a list of data and produce a pandas dataframe
+    '''
     data = []
     for object in project_data:
         file_name = object.get("describe").get("name")
@@ -107,15 +122,24 @@ def create_download_links(project_data):
 
 # find project name using unique project id
 def find_project_name(project_id):
+    '''
+    Find the name of a project using the project id
+    '''
     project_data = dxpy.bindings.dxproject.DXProject(dxid=project_id)
     return project_data.describe().get("name")
 
 def find_project_description(project_id):
+    '''
+    Find the description of the project
+    '''
     project_data = dxpy.bindings.dxproject.DXProject(dxid=project_id)
     return project_data.describe()
 
 
 def archive_after7days(folder):
+    '''
+    Archive CSV after seven days
+    '''
     today = datetime.date.today()
     for filename in os.listdir(cur_path+folder):
         project = pattern.search(filename)[1]
@@ -125,12 +149,6 @@ def archive_after7days(folder):
         if _delta.days > 7:
             os.replace(cur_path+folder+"/"+filename, cur_path+folder+"/archive/"+filename)
 
-def find_previouse_files(folder):
-    projects_csv = {}
-    for filename in os.listdir(cur_path+folder):
-        project = pattern.search(filename)[1]
-        projects_csv[project]={}
-    return projects_csv
 
 def send_email(to, email_subject, email_message):
     """
@@ -173,6 +191,9 @@ class Projects:
         self.time = length
 
     def find_previouse_files(self):
+        '''
+        Find previously generates CSV files to determine if the project needs processing
+        '''
         projects_csv = {}
         files = (file for file in os.listdir(cur_path+self.type) 
             if os.path.isfile(os.path.join(cur_path+self.type, file)))
@@ -182,7 +203,10 @@ class Projects:
         return projects_csv
 
     def no_projects_found(self, proj_type):
-        message = f"no { proj_type } projects were found in time frame specified: { self.time }"
+        '''
+        Log message that NO projects have been found in the time frame specified
+        '''
+        message = f"NO { proj_type } projects were found in time frame specified: { self.time }"
         print(message)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(message)
@@ -197,6 +221,9 @@ class Project:
         self.project_name = find_project_name(proj.get("id"))
 
     def message1(self):
+        '''
+        Log message that the project has been previously porcessed
+        '''
         message = f"csv file for this project already created: { self.name }"
         print(message)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
@@ -204,6 +231,9 @@ class Project:
         return message
     
     def message2(self, proj_type):
+        '''
+        Log message that one or more projects are running
+        '''
         message = f"one or more jobs are running for { proj_type } project: { self.name }"
         print(message)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
@@ -211,6 +241,9 @@ class Project:
         return message
 
     def message3(self, proj_type):
+        '''
+        Log message that no target files have been found for a specific project
+        '''
         message = f"no files were found for { proj_type } project: { self.name }"
         print(message)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
@@ -223,9 +256,15 @@ class WES(Project):
     proj_type = "WES"
     folder = "/WES/"
     def data(self):
+        '''
+        Find the files needed for processing using regex pattern
+        '''
         data = find_project_data(self.id,"/coverage", "\S+.chanjo_txt$") 
         return data
     def make_csv_and_email(self, list):
+        '''
+        Create CSV and send email
+        '''
         download_links = create_download_links(list)
         filepath = cur_path + self.folder + self.id + "__"+  self.name + "_chanjo_txt.csv"
         download_links.to_csv(filepath, index=False, sep=",")
