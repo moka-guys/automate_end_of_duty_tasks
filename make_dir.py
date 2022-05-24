@@ -13,3 +13,5 @@ os.mkdir(cur_path+"/WES/archive")
 
 os.mkdir(cur_path+"/MokaPipe")
 os.mkdir(cur_path+"/MokaPipe/archive")
+
+os.mkdir(cur_path+"/LOG")
