@@ -12,7 +12,6 @@ from email.mime.text import MIMEText
 from jinja2 import Environment, select_autoescape, FileSystemLoader
 from mokaguys_logger import log_setup, logging
 from tqdm import tqdm
-from my_proxy_smtplib import ProxySMTP
 """
 Automate End of Duty Tasks
 Python 3
