@@ -3,22 +3,22 @@ __pycache__
 
 SNP/*
 !SNP/.gitkeep
-!SNP/archive
+SNP/archive/*
 !SNP/archive/.gitkeep
 
 TSO500/*
 !TSO500/.gitkeep
-!TSO500/archive
+TSO500/archive/*
 !TSO500/archive/.gitkeep
 
 MokaPipe/*
 !MokaPipe/.gitkeep
-!MokaPipe/archive
+MokaPipe/archive/*
 !MokaPipe/archive/.gitkeep
 
 WES/*
 !WES/.gitkeep
-!WES/archive
+WES/archive/*
 !WES/archive/.gitkeep
 
 .amazon_email_pw
