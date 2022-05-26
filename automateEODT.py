@@ -169,11 +169,11 @@ def send_email(to, email_subject, email_message):
     email_content.attach(msgText)
     #m.set_payload(email_message)
     # server details
-    server = ProxySMTP(host=config.host, port=config.port, proxy_addr="smtp://relay.gstt.local", proxy_port=25)
+    server = smtplib.SMTP(host=config.host, port=config.port, timeout=10)
     server.set_debuglevel(False)  # verbosity turned off - set to true to get debug messages
     server.starttls() # notifies a mail server that the contents of an email need to be encrypted
     server.ehlo() #Identify yourself to an ESMTP server using EHLO
-    server.login(config.user, config.pw)
+    #server.login(config.user, config.pw)
     server.sendmail(config.me, to, email_content.as_string())
 
 class Projects:
