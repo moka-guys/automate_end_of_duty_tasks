@@ -317,7 +317,7 @@ class MokaPipe(Project):
         download_RPKM_links.to_csv(RPKM_filepath, index=False, sep=",")
         download_coverage_links.to_csv(coverage_filepath, index=False, sep=",")
         subject = "TSO500 run: " + self.name
-        text = python3 + " " + duty_bio_scripts +"\\process_TSO.py " + RPKM_filepath + " " + coverage_filepath
+        text = python3 + " " + duty_bio_scripts +"\\process_MokaPipe.py " + RPKM_filepath + " " + coverage_filepath
         html = template.render(copy_text=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.project_name)
         send_email(config.test, subject, html)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
