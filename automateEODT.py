@@ -142,12 +142,15 @@ def archive_after7days(folder):
     files = (file for file in os.listdir(cur_path+folder) 
         if os.path.isfile(os.path.join(cur_path+folder, file)))
     for filename in files:
-        project = pattern.search(filename)[1]
-        date_modified = datetime.date.fromtimestamp(find_project_description(project).get("modified")/1000)
-        _delta = today - date_modified
-        print("number of days modified from now: {}".format(_delta.days))
-        if _delta.days > 7:
-            os.replace(cur_path+folder+"/"+filename, cur_path+folder+"/archive/"+filename)
+        try:
+            project = pattern.search(filename)[1]
+            date_modified = datetime.date.fromtimestamp(find_project_description(project).get("modified")/1000)
+            _delta = today - date_modified
+            print("number of days modified from now: {}".format(_delta.days))
+            if _delta.days > 7:
+                os.replace(cur_path+folder+"/"+filename, cur_path+folder+"/archive/"+filename)
+        except:
+            project = ''
 
 def send_email(to, email_subject, email_message):
     """
