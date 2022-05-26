@@ -3,6 +3,7 @@ import pandas as pd
 from DNAnexus_auth_token import token
 import re
 import os
+import sys
 import datetime
 import config
 import smtplib
@@ -361,7 +362,7 @@ if __name__ == "__main__":
     Key for length:
     “s”, “m”, “d”, “w”, or “y” (for seconds, minutes, days, weeks, or years)
     """
-    length = "-7d" #searches projects created within the last seven days
+    length = sys.argv[1] #searches projects created within the last seven days
 
     patterns = { 
                 "/WES": "002_[2-5]\d+_\S+WES", 
@@ -424,6 +425,3 @@ if __name__ == "__main__":
     archive_after7days("/WES")
     log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
     log.info(f"Script finished running!")
-
-
-
