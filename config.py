@@ -15,8 +15,8 @@ with open(username_file_path, "r") as username_file:
 pw_file = "{document_root}/.amazon_email_pw".format(document_root=document_root)
 with open(pw_file, "r") as email_password_file:
     pw = email_password_file.readline().rstrip()
-host = "email-smtp.eu-west-1.amazonaws.com"
-port = 587
+host = "smtp://relay.gstt.local"
+port = 25
 me = "moka.alerts@gstt.nhs.uk"
 you = mokaguys_email
 test = 'igor.malashchuk@nhs.net'

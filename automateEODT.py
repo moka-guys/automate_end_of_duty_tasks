@@ -33,7 +33,7 @@ LOG_FILENAME = datetime.datetime.now().strftime('%d_%m_%Y_%H_%M_%S_automate_duty
 
 log_setup(cur_path + '/LOG/' + LOG_FILENAME)
 
-# generate download link for DNAnexus object
+
 def download_url(file_ID, project_ID):
     '''
     Create a url for a file in DNAnexus
@@ -46,8 +46,6 @@ def download_url(file_ID, project_ID):
     )
     return download_link[0]
 
-
-# find data based on the name of the file
 def find_project_data(project_id, _folder, filename):
     '''
     Search DNAnexus to find files based on a regexp pattern
@@ -59,8 +57,6 @@ def find_project_data(project_id, _folder, filename):
     )
     return data
 
-
-# find data based on the name of the file
 def find_projects(project_name, _length):
     '''
     Search DNAnexus to find projects based on regex pattern and amount of time from now
@@ -75,7 +71,6 @@ def find_projects(project_name, _length):
         )
     )
     return data
-
 
 def find_project_executions(project_id):
     '''
@@ -95,7 +90,6 @@ def find_project_executions(project_id):
     len(data)
     return _jobs, len(data)
 
-
 def create_download_links(project_data):
     '''
     Generate URL links from a list of data and produce a pandas dataframe
@@ -113,8 +107,6 @@ def create_download_links(project_data):
         data, columns=["name", "folder", "project_id", "file_id", "url"]
     )
 
-
-# find project name using unique project id
 def find_project_name(project_id):
     '''
     Find the name of a project using the project id
@@ -157,7 +149,6 @@ def archive_after7days(folder):
         if _delta.days > 7:
             os.replace(cur_path+folder+"/"+filename, cur_path+folder+"/archive/"+filename)
 
-
 def send_email(to, email_subject, email_message):
     """
     Input = email address, email_subject, email_message, email_priority (optional, default = standard priority)
@@ -166,28 +157,29 @@ def send_email(to, email_subject, email_message):
     """
     # create message object
     #m = Message()
-    m = MIMEMultipart()
+    email_content = MIMEMultipart()
     # set priority
     #m["X-Priority"] = str(email_priority)
     # set subject
-    m["Subject"] = email_subject
+    email_content["Subject"] = email_subject
     # set body
-    m["From"] = config.me
-    m["To"] = to
+    email_content["From"] = config.me
+    email_content["To"] = to
     msgText = MIMEText("<b>%s</b>" % (email_message), "html")
-    m.attach(msgText)
+    email_content.attach(msgText)
     #m.set_payload(email_message)
     # server details
     server = smtplib.SMTP(host=config.host, port=config.port, timeout=10)
     server.set_debuglevel(False)  # verbosity turned off - set to true to get debug messages
-    server.starttls()
-    server.ehlo()
+    server.starttls() # notifies a mail server that the contents of an email need to be encrypted
+    server.ehlo() #Identify yourself to an ESMTP server using EHLO
     server.login(config.user, config.pw)
-    server.sendmail(config.me, to, m.as_string())
+    server.sendmail(config.me, to, email_content.as_string())
 
-
-# Create a Class for Projects
 class Projects:
+    '''
+    Create a class for Projects
+    '''
     def __init__(self, proj_type, pattern, length):
         self.type = proj_type #SNP, WES, MokaPipe or TSO500
         self.data = find_projects(pattern, length)
@@ -203,8 +195,10 @@ class Projects:
         log.info(message)
         return message
 
-#Create a Class for One Prject
 class Project:
+    '''
+    Create a Class for One Project
+    '''
     def __init__(self, proj):
         self.id = proj.get("id")
         self.name = proj.get("describe").get("name")
@@ -244,11 +238,15 @@ class Project:
         
 # WES Project
 class WES(Project):
+    '''
+    Class for WES Project that inherits information from Project
+    '''
     proj_type = "WES"
     folder = "/WES/"
     def data(self):
         '''
-        Find the files needed for processing using regex pattern
+        Find files in the project that are required to be placed on the trust computer:
+        chanjo_txt
         '''
         data = find_project_data(self.id,"/coverage", "\S+.chanjo_txt$") 
         return data
@@ -266,11 +264,17 @@ class WES(Project):
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
 
-# SNP Project
 class SNP(Project):
+    '''
+    Class for SNP Project that inherits information from Project
+    '''
     proj_type = "SNP"
     folder = "/SNP/"
     def data(self):
+        '''
+        Find files in the project that are required to be placed on the trust computer:
+        sites_present_reheader_filtered_normalised.vcf
+        '''
         data = find_project_data(self.id, "/Output", "\S+.sites_present_reheader_filtered_normalised.vcf$")
         return data
     def make_csv_and_email(self, list):
@@ -284,11 +288,18 @@ class SNP(Project):
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
 
-# MokaPipe Project
 class MokaPipe(Project):
+    '''
+    Class for MokaPipe Project that inherits information from Project
+    '''
     proj_type = "MokaPipe"
     folder = "/MokaPipe/"
     def data(self):
+        '''
+        Find files in the project that are required to be placed on the trust computer:
+        exon_level.txt
+        combined_bed_summary
+        '''
         coverage = find_project_data(self.id, "/coverage", "\S+.exon_level.txt$")
         rpkm = find_project_data(self.id, "/conifer_output","combined_bed_summary\S+")
         return [rpkm, coverage]
@@ -308,14 +319,22 @@ class MokaPipe(Project):
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
 
-# TSO500 Project
 class TSO(Project):
+    '''
+    Class for TSO500 Project that inherits information from Project
+    '''
     proj_type = "TSO500"
     folder = "/TSO500/"
     def data(self):
-        gene = find_project_data(self.id, "/coverage", "\S+.gene_level.txt$")
-        exon = find_project_data(self.id, "/coverage", "\S+.exon_level.txt$")
-        results = find_project_data(self.id, "/","^Results.zip$")
+        '''
+        Find files in the project that are required to be placed on the trust computer:
+        gene_level.txt
+        exon_level.txt
+        Results.zip
+        '''
+        gene = find_project_data(self.id, "/coverage", "\S+.gene_level.txt$") 
+        exon = find_project_data(self.id, "/coverage", "\S+.exon_level.txt$") 
+        results = find_project_data(self.id, "/","^Results.zip$") 
         return [results, gene+exon]
     def make_csv_and_email(self, list):
         results  = list[0]
@@ -335,14 +354,11 @@ class TSO(Project):
 
 
 if __name__ == "__main__":
-
     """
-    Key:
+    Key for length:
     “s”, “m”, “d”, “w”, or “y” (for seconds, minutes, days, weeks, or years)
     """
-
-    length = "-7d"
-
+    length = "-7d" #searches projects created within the last seven days
 
     patterns = { 
                 "/WES": "002_[2-5]\d+_\S+WES", 
@@ -351,6 +367,20 @@ if __name__ == "__main__":
                 "/TSO500" : "002_[2-5]\d+_\S+TSO"
                 }
 
+    '''
+    Search WES, MokaPipe, SNP and TSO500 projects using the patterns shown in the dictionary of 'patterns' 
+    for projects created in the last seven days 
+
+    If projects are found a csv file is created with download links for the required files 
+    that need to be placed onto the trsut drives
+
+    The script also checks if the csv files have already been generated and skips generating new files if that is the case
+
+    The script also checks if the projects for the csv files are older than 7 days, if that is the case
+    they are moved to the archived folder.
+
+    Variouse steps are logged to a text file
+    '''
     for proj_type in patterns:
         projects = Projects(proj_type,patterns[proj_type],length) 
         print(f"the project is: { proj_type }") 
@@ -368,7 +398,9 @@ if __name__ == "__main__":
                     project = TSO(item)   
                 else:
                     print(f"file job not recognised: { proj_type }")
-                print(f"{project.id}, { project.name }, { project.jobs}") 
+                print(f"Project_id: {project.id}, Project_name: { project.name }, Project_jobs_status: { project.jobs}") 
+                log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
+                log.info(f"Project_id: {project.id}, Project_name: { project.name }, Project_jobs_status: { project.jobs}")
                 if project.id in prev_proj_csv:
                     project.message1()
                 else:
