@@ -19,8 +19,8 @@ with open(pw_file, "r") as email_password_file:
 #port = 587
 host = "relay.gstt.local"
 port = 25
-me = "moka.alerts@gstt.nhs.uk"
-you = mokaguys_email
-test = 'igor.malashchuk@nhs.net'
+email_send_from = "moka.alerts@gstt.nhs.uk"
+emai_send_to = mokaguys_email
+email_send_test = 'igor.malashchuk@nhs.net'
 smtp_do_tls = True
 

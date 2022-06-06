@@ -8,6 +8,7 @@ import datetime
 import config
 import smtplib
 from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
 from email.mime.text import MIMEText
 from jinja2 import Environment, select_autoescape, FileSystemLoader
 from mokaguys_logger import log_setup, logging
@@ -27,7 +28,8 @@ env = Environment(
 )
 template = env.get_template("email.html")
 python3 = "S:\\Genetics_Data2\\Array\\Software\\Python-3.6.5\\python"
-duty_bio_scripts = "S:\\Genetics_Data2\\Array\\Software\\duty_bioinformatician_scripts"
+duty_bio_scripts = "S:\\Genetics_Data2\\Array\\Software\\duty_bioinformatician_scripts\\process_duty_email.py"
+path_to_csv_saved_files = "P:\\Duty_Bioinformatician\\CSV_files"
 
 LOG_FILENAME = datetime.datetime.now().strftime('%d_%m_%Y_%H_%M_%S_automate_duty_tasks.log')
 
@@ -90,11 +92,15 @@ def find_project_executions(project_id):
     len(data)
     return _jobs, len(data)
 
-def create_download_links(project_data):
+def create_download_links(project_data, project_name):
     '''
     Generate URL links from a list of data and produce a pandas dataframe
     '''
     data = []
+    info_message = f"creating Download links for {project_name[0]} project: {project_name[1]}"
+    print(info_message)
+    log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
+    log.info(info_message)
     for object in tqdm(project_data):
         file_name = object.get("describe").get("name")
         folder = object.get("describe").get("folder")
@@ -107,12 +113,6 @@ def create_download_links(project_data):
         data, columns=["name", "folder", "project_id", "file_id", "url"]
     )
 
-def find_project_name(project_id):
-    '''
-    Find the name of a project using the project id
-    '''
-    project_data = dxpy.bindings.dxproject.DXProject(dxid=project_id)
-    return project_data.describe().get("name")
 
 def find_project_description(project_id):
     '''
@@ -152,7 +152,16 @@ def archive_after7days(folder):
         except:
             project = ''
 
-def send_email(to, email_subject, email_message):
+def create_text_file(filepath):
+    '''
+    This function is used to generate a text file with project name as a way to make sure that 
+    '''
+    date_now = datetime.datetime.now().strftime('%Y_%m_%d_%H:%M:%S')
+    f = open(filepath, "a")
+    f.write(f"CSV file has been created and emailed to mokaguys on { date_now }")
+    f.close()
+
+def send_email(to, email_subject, email_message, list_df, filenames):
     """
     Input = email address, email_subject, email_message, email_priority (optional, default = standard priority)
     Uses smtplib to send an email. 
@@ -166,18 +175,22 @@ def send_email(to, email_subject, email_message):
     # set subject
     email_content["Subject"] = email_subject
     # set body
-    email_content["From"] = config.me
+    email_content["From"] = config.email_send_from
     email_content["To"] = to
     msgText = MIMEText("<b>%s</b>" % (email_message), "html")
     email_content.attach(msgText)
+    for count, df in enumerate(list_df):
+        attachment = MIMEApplication(df.to_csv())
+        attachment["Content-Disposition"] = 'attachment; filename=" {}"'.format(f"{filenames[count]}.csv")
+        email_content.attach(attachment)
     #m.set_payload(email_message)
     # server details
     server = smtplib.SMTP(host=config.host, port=config.port, timeout=10)
     server.set_debuglevel(False)  # verbosity turned off - set to true to get debug messages
     server.starttls() # notifies a mail server that the contents of an email need to be encrypted
     server.ehlo() #Identify yourself to an ESMTP server using EHLO
-    #server.login(config.user, config.pw)
-    server.sendmail(config.me, to, email_content.as_string())
+    #server.login(config.user, config.pw) uses gstt relay to send emails, see config.py file
+    server.sendmail(config.email_send_from, to, email_content.as_string())
 
 class Projects:
     '''
@@ -206,7 +219,6 @@ class Project:
         self.id = proj.get("id")
         self.name = proj.get("describe").get("name")
         self.jobs = find_project_executions(proj.get("id"))
-        self.project_name = find_project_name(proj.get("id"))
 
     def message1(self):
         '''
@@ -257,15 +269,22 @@ class WES(Project):
         '''
         Create CSV and send email
         '''
-        download_links = create_download_links(list)
-        filepath = cur_path + self.folder + self.id + "__"+  self.name + "_chanjo_txt.csv"
-        download_links.to_csv(filepath, index=False, sep=",")
-        subject = "WES run: " + self.name
-        text = python3 + " " + duty_bio_scripts +"\\process_WES.py " + filepath
-        html = template.render(copy_text=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.project_name)
-        send_email(config.test, subject, html)
-        log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-        log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
+        if len(list) >= 1:
+            download_links = create_download_links(list, [self.proj_type, self.name])
+            filename = self.id + "__" + self.proj_type + '__' + self.name + "_chanjo_txt.csv"
+            filepath = cur_path + self.folder + filename
+            create_text_file(filepath.replace('.csv', '.txt'))
+            subject = "WES run: " + self.name
+            text = ''
+            html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name)
+            send_email(config.email_send_test, subject, html, [download_links], [filename])
+            log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
+            log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_test } for project: { self.name }")
+        else:
+            print(f"The number of items for chanjo_txt:{len(list)}")
+            log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
+            log.info(f"The number of items for chanjo_txt:{len(list)}")
+
 
 class SNP(Project):
     '''
@@ -281,15 +300,21 @@ class SNP(Project):
         data = find_project_data(self.id, "/Output", "\S+.sites_present_reheader_filtered_normalised.vcf$")
         return data
     def make_csv_and_email(self, list):
-        download_links = create_download_links(list)
-        filepath = cur_path + self.folder  + self.id + "__"+  self.name + "_VCFs.csv"
-        download_links.to_csv(filepath, index=False, sep=",")
-        subject = "SNP run: " + self.name
-        text = python3+ " " + duty_bio_scripts +"\\process_SNP.py " + filepath
-        html = template.render(copy_text=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.project_name)
-        send_email(config.test, subject, html)
-        log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-        log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
+        if len(list) >= 1:
+            download_links = create_download_links(list, [self.proj_type, self.name])
+            filename = self.id + "__" + self.proj_type + '__' + self.name + "_VCFs.csv"
+            filepath = cur_path + self.folder + filename
+            create_text_file(filepath.replace('.csv', '.txt'))
+            subject = "SNP run: " + self.name
+            text = ''
+            html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name)
+            send_email(config.email_send_test, subject, html, [download_links], [filename])
+            log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
+            log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_test } for project: { self.name }")
+        else:
+            print(f"The number of items for VCF:{len(list)}")
+            log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
+            log.info(f"The number of items for VCF:{len(list)}")
 
 class MokaPipe(Project):
     '''
@@ -309,18 +334,25 @@ class MokaPipe(Project):
     def make_csv_and_email(self, list):
         rpkm  = list[0]
         coverage = list[1]
-        download_RPKM_links = create_download_links(rpkm)
-        download_coverage_links = create_download_links(coverage)
-        RPKM_filepath = cur_path + self.folder  + self.id + "__"+  self.name + "_RPKM.csv"
-        coverage_filepath = cur_path + self.folder  +  self.id + "__" + self.name + "_Coverage.csv"
-        download_RPKM_links.to_csv(RPKM_filepath, index=False, sep=",")
-        download_coverage_links.to_csv(coverage_filepath, index=False, sep=",")
-        subject = "TSO500 run: " + self.name
-        text = python3 + " " + duty_bio_scripts +"\\process_MokaPipe.py " + RPKM_filepath + " " + coverage_filepath
-        html = template.render(copy_text=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.project_name)
-        send_email(config.test, subject, html)
-        log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-        log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
+        if len(rpkm) >= 1 and len(coverage) >= 1:
+            download_RPKM_links = create_download_links(rpkm, [self.proj_type, self.name])
+            download_coverage_links = create_download_links(coverage, [self.proj_type, self.name])
+            RPKM_filename = self.id + "__" + self.proj_type + '__'+ self.name + "_RPKM.csv"
+            coverage_filename = self.id + "__" + self.proj_type + '__' + self.name + "_Coverage.csv"
+            RPKM_filepath = cur_path + self.folder + RPKM_filename
+            coverage_filepath = cur_path + self.folder + coverage_filename
+            create_text_file(RPKM_filepath.replace('.csv', '.txt'))
+            create_text_file(coverage_filepath.replace('.csv', '.txt'))
+            subject = "TSO500 run: " + self.name
+            text = ''
+            html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name)
+            send_email(config.email_send_test, subject, html, [download_RPKM_links, download_coverage_links], [RPKM_filename, coverage_filename])
+            log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
+            log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_test } for project: { self.name }")
+        else:
+            print(f"The number of items for RPKM:{len(rpkm)}; for coverage: {len(coverage)}")
+            log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
+            log.info(f"The number of items for RPKM:{len(rpkm)}; for coverage: {len(coverage)}")
 
 class TSO(Project):
     '''
@@ -342,19 +374,25 @@ class TSO(Project):
     def make_csv_and_email(self, list):
         results  = list[0]
         coverage = list[1]
-        download_results_links = create_download_links(results)
-        download_coverage_links = create_download_links(coverage)
-        results_filepath = cur_path + self.folder  + self.id + "__"+ self.name + "_Results.csv"
-        coverage_filepath = cur_path + self.folder  +  self.id + "__" + self.name + "_Coverage.csv"
-        download_results_links.to_csv(results_filepath, index=False, sep=",")
-        download_coverage_links.to_csv(coverage_filepath, index=False, sep=",")
-        subject = "TSO500 run: " + self.name
-        text = python3 + " " + duty_bio_scripts +"\\process_TSO.py " + results_filepath + " " + coverage_filepath
-        html = template.render(copy_text=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.project_name)
-        send_email(config.test, subject, html)
-        log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-        log.info(f"CSV file(s) generated succesffully and email sent to { config.test } for project: { self.name }")
-
+        if len(results) >= 1 and len(coverage) >= 1:
+            download_results_links = create_download_links(results, [self.proj_type, self.name])
+            download_coverage_links = create_download_links(coverage, [self.proj_type, self.name])
+            results_filename = self.id + "__" + self.proj_type + '__'+ self.name + "_Results.csv"
+            coverage_filename = self.id + "__" + self.proj_type + '__' + self.name + "_Coverage.csv"
+            results_filepath = cur_path + self.folder + results_filename
+            coverage_filepath = cur_path + self.folder + coverage_filename
+            create_text_file(results_filepath.replace('.csv', '.txt'))
+            create_text_file(coverage_filepath.replace('.csv', '.txt'))
+            subject = "TSO500 run: " + self.name
+            text = 'WARNING! TSO500 Results files can take some time to download, please wait'
+            html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name)
+            send_email(config.email_send_test, subject, html, [download_results_links, download_coverage_links], [results_filename, coverage_filename])
+            log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
+            log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_test } for project: { self.name }")
+        else:
+            print(f"The number of items for results:{len(results)}; for coverage: {len(coverage)}")
+            log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
+            log.info(f"The number of items for results:{len(results)}; for coverage: {len(coverage)}")
 
 if __name__ == "__main__":
     """
@@ -369,7 +407,6 @@ if __name__ == "__main__":
                 "/SNP" : "002_[2-5]\d+_\S+SNP", 
                 "/TSO500" : "002_[2-5]\d+_\S+TSO"
                 }
-
     '''
     Search WES, MokaPipe, SNP and TSO500 projects using the patterns shown in the dictionary of 'patterns' 
     for projects created in the last seven days 
