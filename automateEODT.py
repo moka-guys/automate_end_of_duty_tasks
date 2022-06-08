@@ -143,7 +143,7 @@ def archive_after7days(folder):
         if os.path.isfile(os.path.join(cur_path+folder, file)))
     for filename in files:
         try:
-            project = pattern.search(filename)[1]
+            project = pattern.sosearch(filename)[1]
             date_modified = datetime.date.fromtimestamp(find_project_description(project).get("modified")/1000)
             _delta = today - date_modified
             print("number of days modified from now: {}".format(_delta.days))
@@ -189,7 +189,7 @@ def send_email(to, email_subject, email_message, list_df, filenames):
     server.set_debuglevel(False)  # verbosity turned off - set to true to get debug messages
     server.starttls() # notifies a mail server that the contents of an email need to be encrypted
     server.ehlo() #Identify yourself to an ESMTP server using EHLO
-    #server.login(config.user, config.pw) uses gstt relay to send emails, see config.py file
+    #server.login(config.user, config.pw) #uses gstt relay to send emails, see config.py file
     server.sendmail(config.email_send_from, to, email_content.as_string())
 
 class Projects:
@@ -277,9 +277,9 @@ class WES(Project):
             subject = "WES run: " + self.name
             text = ''
             html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name)
-            send_email(config.email_send_test, subject, html, [download_links], [filename])
+            send_email(config.email_send_to, subject, html, [download_links], [filename])
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-            log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_test } for project: { self.name }")
+            log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_to } for project: { self.name }")
         else:
             print(f"The number of items for chanjo_txt:{len(list)}")
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
@@ -308,9 +308,9 @@ class SNP(Project):
             subject = "SNP run: " + self.name
             text = ''
             html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name)
-            send_email(config.email_send_test, subject, html, [download_links], [filename])
+            send_email(config.email_send_to, subject, html, [download_links], [filename])
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-            log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_test } for project: { self.name }")
+            log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_to } for project: { self.name }")
         else:
             print(f"The number of items for VCF:{len(list)}")
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
@@ -346,9 +346,9 @@ class MokaPipe(Project):
             subject = "TSO500 run: " + self.name
             text = ''
             html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name)
-            send_email(config.email_send_test, subject, html, [download_RPKM_links, download_coverage_links], [RPKM_filename, coverage_filename])
+            send_email(config.email_send_to, subject, html, [download_RPKM_links, download_coverage_links], [RPKM_filename, coverage_filename])
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-            log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_test } for project: { self.name }")
+            log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_to } for project: { self.name }")
         else:
             print(f"The number of items for RPKM:{len(rpkm)}; for coverage: {len(coverage)}")
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
@@ -386,9 +386,9 @@ class TSO(Project):
             subject = "TSO500 run: " + self.name
             text = 'WARNING! TSO500 Results files can take some time to download, please wait'
             html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name)
-            send_email(config.email_send_test, subject, html, [download_results_links, download_coverage_links], [results_filename, coverage_filename])
+            send_email(config.email_send_to, subject, html, [download_results_links, download_coverage_links], [results_filename, coverage_filename])
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-            log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_test } for project: { self.name }")
+            log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_to } for project: { self.name }")
         else:
             print(f"The number of items for results:{len(results)}; for coverage: {len(coverage)}")
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
