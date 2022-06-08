@@ -276,7 +276,7 @@ class WES(Project):
             create_text_file(filepath.replace('.csv', '.txt'))
             subject = "WES run: " + self.name
             text = ''
-            html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name)
+            html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name, num_of_csv=1, number_of_files=len(download_links.index))
             send_email(config.email_send_to, subject, html, [download_links], [filename])
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
             log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_to } for project: { self.name }")
@@ -307,7 +307,7 @@ class SNP(Project):
             create_text_file(filepath.replace('.csv', '.txt'))
             subject = "SNP run: " + self.name
             text = ''
-            html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name)
+            html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name, num_of_csv=1, number_of_files=len(download_links.index))
             send_email(config.email_send_to, subject, html, [download_links], [filename])
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
             log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_to } for project: { self.name }")
@@ -345,7 +345,7 @@ class MokaPipe(Project):
             create_text_file(coverage_filepath.replace('.csv', '.txt'))
             subject = "TSO500 run: " + self.name
             text = ''
-            html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name)
+            html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name, num_of_csv=1, number_of_files=len(download_RPKM_links.index)+len(download_coverage_links.index))
             send_email(config.email_send_to, subject, html, [download_RPKM_links, download_coverage_links], [RPKM_filename, coverage_filename])
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
             log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_to } for project: { self.name }")
@@ -385,7 +385,7 @@ class TSO(Project):
             create_text_file(coverage_filepath.replace('.csv', '.txt'))
             subject = "TSO500 run: " + self.name
             text = 'WARNING! TSO500 Results files can take some time to download, please wait'
-            html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name)
+            html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name, num_of_csv=1, number_of_files=len(download_results_links.index)+len(download_coverage_links.index))
             send_email(config.email_send_to, subject, html, [download_results_links, download_coverage_links], [results_filename, coverage_filename])
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
             log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_to } for project: { self.name }")
