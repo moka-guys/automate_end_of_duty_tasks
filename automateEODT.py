@@ -97,7 +97,7 @@ def create_download_links(project_data, project_name):
     Generate URL links from a list of data and produce a pandas dataframe
     '''
     data = []
-    info_message = f"creating Download links for {project_name[0]} project: {project_name[1]}"
+    info_message = "creating Download links for {} project: {}".format(project_name[0],project_name[1])
     print(info_message)
     log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
     log.info(info_message)
@@ -158,7 +158,7 @@ def create_text_file(filepath):
     '''
     date_now = datetime.datetime.now().strftime('%Y_%m_%d_%H:%M:%S')
     f = open(filepath, "a")
-    f.write(f"CSV file has been created and emailed to mokaguys on { date_now }")
+    f.write("CSV file has been created and emailed to mokaguys on {}".format(date_now))
     f.close()
 
 def send_email(to, email_subject, email_message, list_df, filenames):
@@ -181,7 +181,7 @@ def send_email(to, email_subject, email_message, list_df, filenames):
     email_content.attach(msgText)
     for count, df in enumerate(list_df):
         attachment = MIMEApplication(df.to_csv())
-        attachment["Content-Disposition"] = 'attachment; filename=" {}"'.format(f"{filenames[count]}.csv")
+        attachment["Content-Disposition"] = 'attachment; filename=" {}"'.format("{}.csv".format(filenames[count]))
         email_content.attach(attachment)
     #m.set_payload(email_message)
     # server details
@@ -205,7 +205,7 @@ class Projects:
         '''
         Log message that NO projects have been found in the time frame specified
         '''
-        message = f"NO { proj_type } projects were found in time frame specified: { self.time }"
+        message = "NO {} projects were found in time frame specified: {}".format(proj_type, self.time)
         print(message)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(message)
@@ -224,7 +224,7 @@ class Project:
         '''
         Log message that the project has been previously porcessed
         '''
-        message = f"csv file for this project already created: { self.name }"
+        message = "csv file for this project already created: {}".format(self.name)
         print(message)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(message)
@@ -234,7 +234,7 @@ class Project:
         '''
         Log message that one or more projects are running
         '''
-        message = f"one or more jobs are running for { proj_type } project: { self.name }"
+        message = "one or more jobs are running for {} project: {}".format(proj_type, self.name)
         print(message)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(message)
@@ -244,7 +244,7 @@ class Project:
         '''
         Log message that no target files have been found for a specific project
         '''
-        message = f"no files were found for { proj_type } project: { self.name }"
+        message = "no files were found for {} project: {}".format(proj_type, self.name)
         print(message)
         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
         log.info(message)
@@ -279,11 +279,11 @@ class WES(Project):
             html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name, num_of_csv=1, number_of_files=len(download_links.index))
             send_email(config.email_send_to, subject, html, [download_links], [filename])
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-            log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_to } for project: { self.name }")
+            log.info("CSV file(s) generated succesffully and email sent to {} for project: {}".format(config.email_send_to, self.name))
         else:
-            print(f"The number of items for chanjo_txt:{len(list)}")
+            print("The number of items for chanjo_txt:{}".format(len(list)))
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-            log.info(f"The number of items for chanjo_txt:{len(list)}")
+            log.info("The number of items for chanjo_txt:{}".format(len(list)))
 
 
 class SNP(Project):
@@ -310,11 +310,11 @@ class SNP(Project):
             html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name, num_of_csv=1, number_of_files=len(download_links.index))
             send_email(config.email_send_to, subject, html, [download_links], [filename])
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-            log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_to } for project: { self.name }")
+            log.info("CSV file(s) generated succesffully and email sent to {} for project: {}".format(config.email_send_to, self.name))
         else:
-            print(f"The number of items for VCF:{len(list)}")
+            print("The number of items for VCF:{}".format(len(list)))
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-            log.info(f"The number of items for VCF:{len(list)}")
+            log.info("The number of items for VCF:{}".format(len(list)))
 
 class MokaPipe(Project):
     '''
@@ -348,11 +348,11 @@ class MokaPipe(Project):
             html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name, num_of_csv=2, number_of_files=len(download_RPKM_links.index)+len(download_coverage_links.index))
             send_email(config.email_send_to, subject, html, [download_RPKM_links, download_coverage_links], [RPKM_filename, coverage_filename])
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-            log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_to } for project: { self.name }")
+            log.info("CSV file(s) generated succesffully and email sent to {} for project: {}".format(config.email_send_to, self.name))
         else:
-            print(f"The number of items for RPKM:{len(rpkm)}; for coverage: {len(coverage)}")
+            print("The number of items for RPKM:{}; for coverage: {}".format(len(rpkm), len(coverage)))
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-            log.info(f"The number of items for RPKM:{len(rpkm)}; for coverage: {len(coverage)}")
+            log.info("The number of items for RPKM:{}; for coverage: {}".format(len(rpkm), len(coverage)))
 
 class TSO(Project):
     '''
@@ -388,11 +388,11 @@ class TSO(Project):
             html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name, num_of_csv=2, number_of_files=len(download_results_links.index)+len(download_coverage_links.index))
             send_email(config.email_send_to, subject, html, [download_results_links, download_coverage_links], [results_filename, coverage_filename])
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-            log.info(f"CSV file(s) generated succesffully and email sent to { config.email_send_to } for project: { self.name }")
+            log.info("CSV file(s) generated succesffully and email sent to {} for project: {}".format(config.email_send_to, self.name))
         else:
-            print(f"The number of items for results:{len(results)}; for coverage: {len(coverage)}")
+            print("The number of items for results:{}; for coverage: {}".format(len(results), len(coverage)))
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-            log.info(f"The number of items for results:{len(results)}; for coverage: {len(coverage)}")
+            log.info("The number of items for results:{}; for coverage: {}".format(len(results), len(coverage)))
 
 if __name__ == "__main__":
     """
@@ -423,7 +423,7 @@ if __name__ == "__main__":
     '''
     for proj_type in patterns:
         projects = Projects(proj_type,patterns[proj_type],length) 
-        print(f"the project is: { proj_type }") 
+        print("the project is: {}".format(proj_type)) 
         if projects.data:
             prev_proj_csv = find_previouse_files(proj_type)
             print(prev_proj_csv)
@@ -437,14 +437,14 @@ if __name__ == "__main__":
                 elif proj_type == "/TSO500":
                     project = TSO(item)   
                 else:
-                    print(f"file job not recognised: { proj_type }")
-                print(f"Project_id: {project.id}, Project_name: { project.name }, Project_jobs_status: { project.jobs}") 
+                    print("file job not recognised: {}".format(proj_type))
+                print("Project_id: {project.id}, Project_name: {}, Project_jobs_status: {}".format(project.name, project.jobs)) 
                 log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-                log.info(f"Project_id: {project.id}, Project_name: { project.name }, Project_jobs_status: { project.jobs}")
+                log.info("Project_id: {}, Project_name: {}, Project_jobs_status: {}".format(project.id, project.name, project.jobs))
                 if project.id in prev_proj_csv:
                     project.message1()
                 else:
-                    print(f'project id: {project.id} and prev_proj_csc: {prev_proj_csv}')
+                    print('project id: {} and prev_proj_csc: {}'.format(project.id, prev_proj_csv))
                     if "running" not in project.jobs and "done" in project.jobs[0]:
                         project_data = project.data()
                         if project_data:
@@ -460,4 +460,4 @@ if __name__ == "__main__":
     archive_after7days("/TSO500")
     archive_after7days("/WES")
     log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
-    log.info(f"Script finished running!")
+    log.info("Script finished running!")
