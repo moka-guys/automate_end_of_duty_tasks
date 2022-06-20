@@ -438,7 +438,7 @@ if __name__ == "__main__":
                     project = TSO(item)   
                 else:
                     print("file job not recognised: {}".format(proj_type))
-                print("Project_id: {project.id}, Project_name: {}, Project_jobs_status: {}".format(project.name, project.jobs)) 
+                print("Project_id: {}, Project_name: {}, Project_jobs_status: {}".format(project.id, project.name, project.jobs)) 
                 log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
                 log.info("Project_id: {}, Project_name: {}, Project_jobs_status: {}".format(project.id, project.name, project.jobs))
                 if project.id in prev_proj_csv:
