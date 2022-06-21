@@ -13,7 +13,7 @@ The script supports the following projects:
 ## Deployment
 
 The script runs on the Genapp test server. To deploy the scrip please use the ansible-playbook:
-[automate_end_of_duty_tasks.yml]()
+[automate_end_of_duty_tasks.yml](https://github.com/moka-guys/deployment/blob/develop/playbooks/automate_end_of_duty_tasks.yml)
 on the Genapp Test Server go to the deployment directory:
 ```xml
 cd /home/mokaguys/code/deployment
@@ -31,9 +31,9 @@ The variables are located here:
 
 The script is set up to search for DNAnexus projects created in the previous 7 days. 
 
-The email containing csv attachment is sent to mokaguys (gst-tr.mokaguys@nhs.net) \
+The email containing csv attachment is sent to mokaguys (gst-tr.mokaguys@nhs.net) 
 
-The duty Bioinformatician has to save the csv file(s) to the following location:\
+The duty Bioinformatician has to save the csv file(s) to the following location:
 ```xml
 P:\Bioinformatics\Duty_Bioinformatics_CSV
 ```
@@ -41,9 +41,10 @@ Open powershell\
 
 Please set up a PowerShell profile on the Trust Computer (Citrix) by following this link: [article](https://viapath.service-now.com/nav_to.do?uri=%2Fkb_view.do%3Fsys_kb_id%3Df076201c1b4cd5500dc321f6b04bcbc7)
 
-In PowerShell type:\
+In PowerShell type:
+```xml
 duty
-
+```
 ## Developers
 Igor Malashchuk\
 STP Trainee in Clinical Bioinformatics\
