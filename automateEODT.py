@@ -20,16 +20,18 @@ Python 3
 
 dxpy.set_security_context({"auth_token_type": "Bearer", "auth_token": token})
 
-cur_path = os.getcwd()
+cur_path_script = os.getcwd()
+cur_path_list = cur_path_script.split('/')
+cur_path = '/'.join(cur_path_list[:(len(cur_path_list)-1)])
+
 pattern = re.compile("(project-\S+)__\S+__")
 env = Environment(
     loader=FileSystemLoader("email_templates"),
     autoescape=select_autoescape(["html"])
 )
 template = env.get_template("email.html")
-python3 = "S:\\Genetics_Data2\\Array\\Software\\Python-3.6.5\\python"
-duty_bio_scripts = "S:\\Genetics_Data2\\Array\\Software\\duty_bioinformatician_scripts\\process_duty_email.py"
-path_to_csv_saved_files = "P:\\Duty_Bioinformatician\\CSV_files"
+#python3 = "S:\\Genetics_Data2\\Array\\Software\\Python-3.6.5\\python"
+#duty_bio_scripts = "S:\\Genetics_Data2\\Array\\Software\\duty_bioinformatician_scripts\\process_duty_email.py"
 
 LOG_FILENAME = datetime.datetime.now().strftime('%d_%m_%Y_%H_%M_%S_automate_duty_tasks.log')
 
