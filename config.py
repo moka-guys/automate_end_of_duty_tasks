@@ -1,14 +1,10 @@
 '''
 Email server settings
 '''
-import os
-
-
 #document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
 #document_root = os.getcwd()
-mokaguys_email = "gst-tr.mokaguys@nhs.net"
-
 '''
+import os
 doucment_path = os.path.realpath(__file__)
 doucment_path_list = doucment_path.split('/')
 document_root = '/'.join(doucment_path_list[:(len(doucment_path_list)-1)])
@@ -25,6 +21,7 @@ with open(pw_file, "r") as email_password_file:
 host = "email-smtp.eu-west-1.amazonaws.com"
 port = 587
 '''
+mokaguys_email = "gst-tr.mokaguys@nhs.net"
 host = "relay.gstt.local"
 port = 25
 email_send_from = "moka.alerts@gstt.nhs.uk"
