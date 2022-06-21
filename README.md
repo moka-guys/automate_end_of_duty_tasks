@@ -37,7 +37,7 @@ The duty Bioinformatician has to save the csv file(s) to the following location:
 ```xml
 P:\Bioinformatics\Duty_Bioinformatics_CSV
 ```
-Open powershell\
+Open PowerShell.
 
 Please set up a PowerShell profile on the Trust Computer (Citrix) by following this link: [article](https://viapath.service-now.com/nav_to.do?uri=%2Fkb_view.do%3Fsys_kb_id%3Df076201c1b4cd5500dc321f6b04bcbc7)
 
