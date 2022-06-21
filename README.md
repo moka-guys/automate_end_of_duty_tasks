@@ -13,8 +13,8 @@ The script supports the following projects:
 ## Deployment
 
 The script runs on the Genapp test server. To deploy the scrip please use the ansible-playbook:
-[automate_end_of_duty_tasks.yml](https://github.com/moka-guys/deployment/blob/develop/playbooks/automate_end_of_duty_tasks.yml)
-on the Genapp Test Server go to the deployment directory:
+[automate_end_of_duty_tasks.yml](https://github.com/moka-guys/deployment/blob/develop/playbooks/automate_end_of_duty_tasks.yml)\
+On the Genapp Test Server go to the deployment directory:
 ```xml
 cd /home/mokaguys/code/deployment
 ```
