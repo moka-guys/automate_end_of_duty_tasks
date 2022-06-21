@@ -7,12 +7,12 @@ The script searches the DNAnexus for recently created production projects '002_'
 An email is sent to the Duty Bioinformatician with instructions on how to download the files to the appropriate locations on the GST-Trust network. 
 
 The script supports the following projects:
-
+~~~
 Markup : * WES
          * TSO500
          * SNP
          * MokaPipe
-
+~~~
 ## Deployment
 
 The script runs on the Genapp test server. To deploy the scrip please use the ansible-playbook:
