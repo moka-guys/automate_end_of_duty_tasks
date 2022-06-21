@@ -20,13 +20,14 @@ Python 3
 
 dxpy.set_security_context({"auth_token_type": "Bearer", "auth_token": token})
 
-cur_path_script = os.getcwd()
+cur_path_script = os.path.realpath(__file__)
 cur_path_list = cur_path_script.split('/')
-cur_path = '/'.join(cur_path_list[:(len(cur_path_list)-1)])
-
+cur_path = '/'.join(cur_path_list[:(len(cur_path_list)-2)])
+env_path = '/'.join(cur_path_list[:(len(cur_path_list)-1)])
+print(cur_path)
 pattern = re.compile("(project-\S+)__\S+__")
 env = Environment(
-    loader=FileSystemLoader("email_templates"),
+    loader=FileSystemLoader(env_path+"/email_templates"),
     autoescape=select_autoescape(["html"])
 )
 template = env.get_template("email.html")

@@ -2,11 +2,17 @@
 Email server settings
 '''
 import os
+
+
 #document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
-document_root = os.getcwd()
+#document_root = os.getcwd()
 mokaguys_email = "gst-tr.mokaguys@nhs.net"
 
 '''
+doucment_path = os.path.realpath(__file__)
+doucment_path_list = doucment_path.split('/')
+document_root = '/'.join(doucment_path_list[:(len(doucment_path_list)-1)])
+
 username_file_path = "{document_root}/.amazon_email_username".format(
     document_root=document_root
 )
