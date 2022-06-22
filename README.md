@@ -63,8 +63,8 @@ python automate_end_of_duty_tasks/automateEODT.py -7d
 The period of time can be changed by using the following key:
     “s”, “m”, “d”, “w”, or “y” (for seconds, minutes, days, weeks, or years)
 
-Note:\ 
-To run the script requires DNAnexus read-only token saved to a file called DNAnexus_auth_token.py inside the automate_end_of_duty_tasks folder. 
+Note: <br />
+To run the script requires DNAnexus read-only token saved to a file called DNAnexus_auth_token.py inside the automate_end_of_duty_tasks folder. <br />
 Inside the DNAnexus_auth_token.py type:
 ~~~
 token = 'XXXXXXXXXXXXXXXXXXXXXXX'
