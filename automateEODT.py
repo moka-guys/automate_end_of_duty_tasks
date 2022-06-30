@@ -95,7 +95,7 @@ def find_project_executions(project_id):
     len(data)
     return _jobs, len(data)
 
-def create_download_links(project_data, project_name):
+def create_download_links(project_data, project_name, file_type):
     '''
     Generate URL links from a list of data and produce a pandas dataframe
     '''
@@ -109,11 +109,12 @@ def create_download_links(project_data, project_name):
         folder = object.get("describe").get("folder")
         object_id = object.get("id")
         project_id = object.get("project")
+        type_of_file = file_type
         url = download_url(object_id, project_id) + "/" + file_name
-        merged_data = [file_name, folder, project_id, object_id, url]
+        merged_data = [file_name, folder, type_of_file, url]
         data.append(merged_data)
     return pd.DataFrame(
-        data, columns=["name", "folder", "project_id", "file_id", "url"]
+        data, columns=["name", "folder", "type", "url"]
     )
 
 
@@ -273,11 +274,11 @@ class WES(Project):
         Create CSV and send email
         '''
         if len(list) >= 1:
-            download_links = create_download_links(list, [self.proj_type, self.name])
+            download_links = create_download_links(list, [self.proj_type, self.name], 'coverage')
             filename = self.id + "__" + self.proj_type + '__' + self.name + "_chanjo_txt.csv"
             filepath = cur_path + self.folder + filename
             create_text_file(filepath.replace('.csv', '.txt'))
-            subject = "WES run: " + self.name
+            subject = "{} run: ".format(self.proj_type) + self.name
             text = ''
             html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name, num_of_csv=1, number_of_files=len(download_links.index))
             send_email(config.email_send_to, subject, html, [download_links], [filename])
@@ -304,11 +305,11 @@ class SNP(Project):
         return data
     def make_csv_and_email(self, list):
         if len(list) >= 1:
-            download_links = create_download_links(list, [self.proj_type, self.name])
+            download_links = create_download_links(list, [self.proj_type, self.name], 'output')
             filename = self.id + "__" + self.proj_type + '__' + self.name + "_VCFs.csv"
             filepath = cur_path + self.folder + filename
             create_text_file(filepath.replace('.csv', '.txt'))
-            subject = "SNP run: " + self.name
+            subject = "{} run: ".format(self.proj_type) + self.name
             text = ''
             html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name, num_of_csv=1, number_of_files=len(download_links.index))
             send_email(config.email_send_to, subject, html, [download_links], [filename])
@@ -333,23 +334,23 @@ class MokaPipe(Project):
         '''
         coverage = find_project_data(self.id, "/coverage", "\S+.exon_level.txt$")
         rpkm = find_project_data(self.id, "/conifer_output","combined_bed_summary\S+")
-        return [rpkm, coverage]
+        fh_prs = find_project_data(self.id, "/PRS_output","\S+.txt$")
+        return [rpkm, coverage, fh_prs]
     def make_csv_and_email(self, list):
         rpkm  = list[0]
         coverage = list[1]
-        if len(rpkm) >= 1 and len(coverage) >= 1:
-            download_RPKM_links = create_download_links(rpkm, [self.proj_type, self.name])
-            download_coverage_links = create_download_links(coverage, [self.proj_type, self.name])
-            RPKM_filename = self.id + "__" + self.proj_type + '__'+ self.name + "_RPKM.csv"
-            coverage_filename = self.id + "__" + self.proj_type + '__' + self.name + "_Coverage.csv"
-            RPKM_filepath = cur_path + self.folder + RPKM_filename
-            coverage_filepath = cur_path + self.folder + coverage_filename
-            create_text_file(RPKM_filepath.replace('.csv', '.txt'))
-            create_text_file(coverage_filepath.replace('.csv', '.txt'))
-            subject = "TSO500 run: " + self.name
+        fh_prs = list[2]
+        if len(rpkm) >= 1 and len(coverage) >= 1 and len(fh_prs) >= 1:
+            download_RPKM_links = create_download_links(rpkm, [self.proj_type, self.name], 'RPKM')
+            download_coverage_links = create_download_links(coverage, [self.proj_type, self.name], 'coverage')
+            download_FHPRS_links = create_download_links(fh_prs, [self.proj_type, self.name], 'FH_PRS')
+            MokaPipe_filename = self.id + "__" + self.proj_type + '__'+ self.name + ".csv"
+            MokaPipe_filepath = cur_path + self.folder + MokaPipe_filename
+            create_text_file(MokaPipe_filepath.replace('.csv', '.txt'))
+            subject = "{} run: ".format(self.proj_type) + self.name
             text = ''
-            html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name, num_of_csv=2, number_of_files=len(download_RPKM_links.index)+len(download_coverage_links.index))
-            send_email(config.email_send_to, subject, html, [download_RPKM_links, download_coverage_links], [RPKM_filename, coverage_filename])
+            html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name, num_of_csv=1, number_of_files=len(download_RPKM_links.index)+len(download_coverage_links.index))
+            send_email(config.email_send_to, subject, html, [pd.concat([download_RPKM_links, download_coverage_links, download_FHPRS_links])], [MokaPipe_filename])
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
             log.info("CSV file(s) generated succesffully and email sent to {} for project: {}".format(config.email_send_to, self.name))
         else:
@@ -373,23 +374,23 @@ class TSO(Project):
         gene = find_project_data(self.id, "/coverage", "\S+.gene_level.txt$") 
         exon = find_project_data(self.id, "/coverage", "\S+.exon_level.txt$") 
         results = find_project_data(self.id, "/","^Results.zip$") 
-        return [results, gene+exon]
+        sompy = find_project_data(self.id, "/QC", "\S+_MergedSmallVariants.genome.vcf.stats.csv$") 
+        return [results, gene+exon, sompy]
     def make_csv_and_email(self, list):
         results  = list[0]
         coverage = list[1]
+        sompy = list[2]
         if len(results) >= 1 and len(coverage) >= 1:
-            download_results_links = create_download_links(results, [self.proj_type, self.name])
-            download_coverage_links = create_download_links(coverage, [self.proj_type, self.name])
-            results_filename = self.id + "__" + self.proj_type + '__'+ self.name + "_Results.csv"
-            coverage_filename = self.id + "__" + self.proj_type + '__' + self.name + "_Coverage.csv"
-            results_filepath = cur_path + self.folder + results_filename
-            coverage_filepath = cur_path + self.folder + coverage_filename
-            create_text_file(results_filepath.replace('.csv', '.txt'))
-            create_text_file(coverage_filepath.replace('.csv', '.txt'))
-            subject = "TSO500 run: " + self.name
+            download_results_links = create_download_links(results, [self.proj_type, self.name], 'Results')
+            download_coverage_links = create_download_links(coverage, [self.proj_type, self.name], 'coverage')
+            download_sompy_links = create_download_links(sompy, [self.proj_type, self.name], 'sompy')
+            TSO_filename = self.id + "__" + self.proj_type + '__'+ self.name + ".csv"
+            TSO_filepath = cur_path + self.folder + TSO_filename
+            create_text_file(TSO_filepath.replace('.csv', '.txt'))
+            subject = "{} run: ".format(self.proj_type) + self.name
             text = 'WARNING! TSO500 Results files can take some time to download, please wait'
-            html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name, num_of_csv=2, number_of_files=len(download_results_links.index)+len(download_coverage_links.index))
-            send_email(config.email_send_to, subject, html, [download_results_links, download_coverage_links], [results_filename, coverage_filename])
+            html = template.render(TSO_message=text, num_jobs=self.jobs[1], jobs_executed=self.jobs[0], project_name = self.name, num_of_csv=1, number_of_files=len(download_results_links.index)+len(download_coverage_links.index))
+            send_email(config.email_send_to, subject, html, [pd.concat([download_results_links, download_coverage_links, download_sompy_links])], [TSO_filename])
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
             log.info("CSV file(s) generated succesffully and email sent to {} for project: {}".format(config.email_send_to, self.name))
         else:
