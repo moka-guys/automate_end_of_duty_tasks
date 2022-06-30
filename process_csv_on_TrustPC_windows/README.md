@@ -16,16 +16,30 @@ This script can be added to the PowerShell Profile on the trsut computer by foll
 https://viapath.service-now.com/nav_to.do?uri=%2Fkb_view.do%3Fsys_kb_id%3Df076201c1b4cd5500dc321f6b04bcbc7
 ~~~
 
+The duty bioinformatician has to save the csv file in the following folder:
+
+~~~
+P:\Bioinformatics\Duty_Bioinformatics_CSV
+~~~
+
 Once the PowerShell Profile has been set up, to run the script simply open the PowerShell and type:
 
 ~~~
 duty
 ~~~
 
+The duty python script will read the csv file and will send a command to PowerShell to download the files to appropriate folders. The script will also archive the csv file to the archive folder. Furthermore, the script will produce a log file fo the output of the Powershell Downloads to the log folder. These folders are located on the GSTT computer here:
+
+~~~
+P:\Bioinformatics\Duty_Bioinformatics_CSV\archive
+P:\Bioinformatics\Duty_Bioinformatics_CSV\process_logs
+~~~
+
 Alternatively, this script can be executed manually on a Trust PC using this command:
 
 ~~~
 S:\Genetics_Data2\Array\Software\Python-3.6.5\python S:\Genetics_Data2\Array\Software\duty_bioinformatician_scripts\process_duty_email.py
+
 ~~~
 
 # Developers
