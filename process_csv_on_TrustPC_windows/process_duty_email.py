@@ -66,39 +66,12 @@ def get_data_StG(df, path_to_folder):
             StG_urls += line
     return StG_urls
 
-
-def download_data_and_extract(df, path_to_folder, destination_of_extracted_Results):
-    """
-    This function reads the data frame (df).
-    From the df file it obtains the download links and uses a powershell script to download the links to the destination folder.
-    Afterwards it extracts the Results.zip file.
-    """
-    for index, row in df.iterrows():
-        process = subprocess.Popen(
-            [
-                "powershell.exe",
-                "S:\\Genetics_Data2\\Array\\Software\\duty_bioinformatician_scripts\\get_file_and_extract.ps1",
-                row["url"],
-                path_to_folder,
-                path_to_folder + "//Results.zip",
-                destination_of_extracted_Results,
-            ]
-        )
-        print(
-            "Downloading data for item: {} and Results.zip file will extract to folder: {}".format(
-                row["name"], destination_of_extracted_Results
-            )
-        )
-
 def save_log_file(text, filename): 
     cur_time = datetime.now()
     cur_time_string = cur_time.strftime("%Y_%m_%d__%H_%M_%S_")
     log_path =  "P:\\Bioinformatics\\Duty_Bioinformatics_CSV\\process_logs\\" + "Finished_on_{}_{}.txt".format(cur_time_string, filename)
     with open(log_path, 'w') as f:
         f.write(text)
-    
-
-    
 
 def get_files():
     """
@@ -148,7 +121,7 @@ class Project:
         destination_of_files = "H:\\Tickets\\automate_end_of_duty_tasks\\Results\\WES"
         for file_path in self.project_files:
             csv_file = pandas.read_csv(file_path, index_col=None)
-            url_wes = get_data(csv_file, destination_of_files)
+            url_wes = get_data(csv_file, '"{}"'.format(destination_of_files))
             output = download_data(url_wes)
             list_of_stings = file_path.split("\\")
             save_log_file(output, list_of_stings[-1].replace('.csv',''))
@@ -160,7 +133,7 @@ class Project:
         destination_of_VCFs = "P:\\Bioinformatics\\VCFs_Andrew"
         for file_path in self.project_files:
             csv_file = pandas.read_csv(file_path, index_col=None)
-            url_snp = get_data(csv_file, destination_of_VCFs)
+            url_snp = get_data(csv_file, '"{}"'.format(destination_of_VCFs))
             output = download_data(url_snp)
             list_of_stings = file_path.split("\\")
             save_log_file(output, list_of_stings[-1].replace('.csv',''))
@@ -237,9 +210,9 @@ class Project:
             os.mkdir(path_to_folder)
             os.mkdir(destination_of_Coverage)
             os.mkdir(destination_of_extracted_Results)
-            url_coverage = get_data(df_coverage, destination_of_Coverage)
-            url_sompy = get_data(df_sompy, destination_of_sompy)
-            url_results = get_data(df_results, path_to_folder)
+            url_coverage = get_data(df_coverage, '"{}"'.format(destination_of_Coverage))
+            url_sompy = get_data(df_sompy, '"{}"'.format(destination_of_sompy))
+            url_results = get_data(df_results, '"{}"'.format(path_to_folder))
             all_url = url_coverage + url_sompy + url_results
             output = download_data(all_url)
             list_of_stings = file_path.split("\\")
