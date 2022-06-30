@@ -66,39 +66,12 @@ def get_data_StG(df, path_to_folder):
             StG_urls += line
     return StG_urls
 
-
-def download_data_and_extract(df, path_to_folder, destination_of_extracted_Results):
-    """
-    This function reads the data frame (df).
-    From the df file it obtains the download links and uses a powershell script to download the links to the destination folder.
-    Afterwards it extracts the Results.zip file.
-    """
-    for index, row in df.iterrows():
-        process = subprocess.Popen(
-            [
-                "powershell.exe",
-                "S:\\Genetics_Data2\\Array\\Software\\duty_bioinformatician_scripts\\get_file_and_extract.ps1",
-                row["url"],
-                path_to_folder,
-                path_to_folder + "//Results.zip",
-                destination_of_extracted_Results,
-            ]
-        )
-        print(
-            "Downloading data for item: {} and Results.zip file will extract to folder: {}".format(
-                row["name"], destination_of_extracted_Results
-            )
-        )
-
 def save_log_file(text, filename): 
     cur_time = datetime.now()
     cur_time_string = cur_time.strftime("%Y_%m_%d__%H_%M_%S_")
     log_path =  "P:\\Bioinformatics\\Duty_Bioinformatics_CSV\\process_logs\\" + "Finished_on_{}_{}.txt".format(cur_time_string, filename)
     with open(log_path, 'w') as f:
         f.write(text)
-    
-
-    
 
 def get_files():
     """
