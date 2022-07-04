@@ -350,7 +350,7 @@ class MokaPipe(Project):
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
             log.info("CSV file(s) generated succesffully and email sent to {} for project: {}".format(config.email_send_to, self.name))
         else:
-            print("The number of items for RPKM:{}; for coverage: {}".format(len(rpkm), len(coverage)))
+            print("The number of items for RPKM:{}; for coverage: {}; for FH_PRS: {}".format(len(rpkm), len(coverage), len(fh_prs)))
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
             log.info("The number of items for RPKM:{}; for coverage: {}".format(len(rpkm), len(coverage)))
 
@@ -388,7 +388,7 @@ class TSO(Project):
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
             log.info("CSV file(s) generated succesffully and email sent to {} for project: {}".format(config.email_send_to, self.name))
         else:
-            print("The number of items for results:{}; for coverage: {}".format(len(results), len(coverage)))
+            print("The number of items for results:{}; for coverage: {}; for sompy: {}".format(len(results), len(coverage), len(sompy)))
             log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
             log.info("The number of items for results:{}; for coverage: {}".format(len(results), len(coverage)))
 
