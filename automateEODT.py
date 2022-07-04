@@ -215,9 +215,8 @@ def send_email(to, email_subject, email_message, list_df, filenames):
     )  # verbosity turned off - set to true to get debug messages
     server.starttls()  # notifies a mail server that the contents of an email need to be encrypted
     server.ehlo()  # Identify yourself to an ESMTP server using EHLO
-    # server.login(config.user, config.pw) #uses gstt relay to send emails, see config.py file
+    #server.login(config.user, config.pw)  # uses gstt relay to send emails, see config.py file
     server.sendmail(config.email_send_from, to, email_content.as_string())
-
 
 class Projects:
     """
@@ -233,7 +232,11 @@ class Projects:
         """
         Log message that NO projects have been found in the time frame specified
         """
-        message = "NO projects were found for {} project in time frame specified: {}".format(self.type, self.time)
+        message = (
+            "NO projects were found for {} project in time frame specified: {}".format(
+                self.type, self.time
+            )
+        )
         print(message)
         log = logging.getLogger(
             datetime.datetime.now().strftime("log_%d/%m/%Y_%H:%M:%S")
@@ -423,16 +426,22 @@ class MokaPipe(Project):
         rpkm = list[0]
         coverage = list[1]
         fh_prs = list[2]
-        if len(rpkm) >= 1 and len(coverage) >= 1 and len(fh_prs) >= 1:
+        if len(rpkm) >= 1 and len(coverage) >= 1:
+            log = logging.getLogger(datetime.datetime.now().strftime("log_%d/%m/%Y_%H:%M:%S"))
+            log.info("The number of items for RPKM:{}; for coverage: {}; for FH_PRS: {}".format(len(rpkm), len(coverage), len(fh_prs)))
             download_RPKM_links = create_download_links(
                 rpkm, [self.proj_type, self.name], "RPKM"
             )
-            download_coverage_links = create_download_links(
-                coverage, [self.proj_type, self.name], "coverage"
-            )
-            download_FHPRS_links = create_download_links(
-                fh_prs, [self.proj_type, self.name], "FH_PRS"
-            )
+            download_coverage_links = create_download_links(coverage, [self.proj_type, self.name], "coverage")
+            if len(fh_prs) >= 1:
+                download_FHPRS_links = create_download_links(
+                    fh_prs, [self.proj_type, self.name], "FH_PRS"
+                )
+                df_list = pd.concat(
+                    [download_RPKM_links, download_coverage_links, download_FHPRS_links]
+                )
+            else:
+                df_list = pd.concat([download_RPKM_links, download_coverage_links])
             MokaPipe_filename = (
                 self.id + "__" + self.proj_type + "__" + self.name + ".csv"
             )
@@ -453,15 +462,7 @@ class MokaPipe(Project):
                 config.email_send_to,
                 subject,
                 html,
-                [
-                    pd.concat(
-                        [
-                            download_RPKM_links,
-                            download_coverage_links,
-                            download_FHPRS_links,
-                        ]
-                    )
-                ],
+                [df_list],
                 [MokaPipe_filename],
             )
             log = logging.getLogger(
@@ -482,8 +483,8 @@ class MokaPipe(Project):
                 datetime.datetime.now().strftime("log_%d/%m/%Y_%H:%M:%S")
             )
             log.info(
-                "The number of items for RPKM:{}; for coverage: {}".format(
-                    len(rpkm), len(coverage)
+                "The number of items for RPKM:{}; for coverage: {}; for FH_PRS: {}".format(
+                    len(rpkm), len(coverage), len(fh_prs)
                 )
             )
 

@@ -3,7 +3,7 @@ Email server settings
 '''
 #document_root = "/".join(os.path.dirname(os.path.realpath(__file__)).split("/")[:-2])
 #document_root = os.getcwd()
-"""
+'''
 import os
 doucment_path = os.path.realpath(__file__)
 doucment_path_list = doucment_path.split('/')
@@ -20,12 +20,12 @@ with open(pw_file, "r") as email_password_file:
 
 host = "email-smtp.eu-west-1.amazonaws.com"
 port = 587
-"""
+'''
 mokaguys_email = "gst-tr.mokaguys@nhs.net"
 host = "relay.gstt.local"
 port = 25
 email_send_from = "moka.alerts@gstt.nhs.uk"
-email_send_to = mokaguys_email
+email_send_to = 'igor.malashchuk@nhs.net'  #mokaguys_email
 email_send_test = 'igor.malashchuk@nhs.net'
 smtp_do_tls = True
 
