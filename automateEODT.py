@@ -422,9 +422,13 @@ if __name__ == "__main__":
     for proj_type in patterns:
         projects = Projects(proj_type,patterns[proj_type],length) 
         print("the project is: {}".format(proj_type)) 
+        log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
+        log.info("the project is: {}".format(proj_type))
         if projects.data:
             prev_proj_csv = find_previouse_files(proj_type)
             print(prev_proj_csv)
+            log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
+            log.info("prev project search: {}".format(prev_proj_csv))
             for item in projects.data:
                 if proj_type == "SNP":
                     project = SNP(item, projects.type)
@@ -436,6 +440,8 @@ if __name__ == "__main__":
                     project = TSO(item, projects.type)   
                 else:
                     print("file job not recognised: {}".format(proj_type))
+                    log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
+                    log.info("file job not recognised: {}".format(proj_type))
                 print("Project_id: {}, Project_name: {}, Project_jobs_status: {}".format(project.id, project.name, project.jobs)) 
                 log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
                 log.info("Project_id: {}, Project_name: {}, Project_jobs_status: {}".format(project.id, project.name, project.jobs))
@@ -443,6 +449,8 @@ if __name__ == "__main__":
                     project.message1()
                 else:
                     print('project id: {} and prev_proj_csc: {}'.format(project.id, prev_proj_csv))
+                    log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
+                    log.info('project id: {} and prev_proj_csc: {}'.format(project.id, prev_proj_csv))
                     if "running" not in project.jobs[0] and "done" in project.jobs[0]:
                         log = logging.getLogger(datetime.datetime.now().strftime('log_%d/%m/%Y_%H:%M:%S'))
                         log.info("Getting data")
