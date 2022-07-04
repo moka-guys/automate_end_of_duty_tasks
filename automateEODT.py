@@ -233,7 +233,7 @@ class Projects:
         """
         Log message that NO projects have been found in the time frame specified
         """
-        message = "NO projects were found in time frame specified: {}".format(self.time)
+        message = "NO projects were found for {} project in time frame specified: {}".format(self.type, self.time)
         print(message)
         log = logging.getLogger(
             datetime.datetime.now().strftime("log_%d/%m/%Y_%H:%M:%S")
