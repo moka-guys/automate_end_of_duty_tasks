@@ -3,7 +3,7 @@ Process duty emails
 Version 1.0.0
 Developer: Igor Malashchuk 
 Email: igor.malashchuk@nhs.net
-Date Modified: 30/06/2022
+Date Modified: 08/07/2022
 """
 import subprocess
 import os
@@ -20,16 +20,17 @@ def ask_for_folder():
     Therefore this function ask the user to enter the last part of the folder
     """
     output_folder = ""
-    #path_worksheets = "P:\\DNA LAB\\Current\\NGS worksheets\\"
-    path_worksheets = "H:\\Tickets\\automate_end_of_duty_tasks\\Results\\"
+    path_worksheets = "P:\\DNA LAB\\Current\\NGS worksheets\\"
+    #path_worksheets = "H:\\Tickets\\automate_end_of_duty_tasks\\Results\\"
     print("Part of destination is:{}".format(path_worksheets))
     while len(output_folder) == 0:
         output_folder = input(
             'Please complete the final part of the destination folder \n(e.g."NGS_401 to 500\\NGS484" place inside double quotes in PowerShell):'
         )
-        print("The destination folder is : {}".format(path_worksheets + output_folder))
-        choice = input('Is this correct ("Y"/"N" place insde double quotes in PowerShell):')
-        if choice.capitalize() != "Y":
+        destination_folder = path_worksheets + output_folder
+        print("The destination folder is : {}".format(destination_folder))
+        if destination_folder == path_worksheets or not os.path.isdir(destination_folder):
+            print("The directory does not exist. Please try again!")
             output_folder = ""
     return path_worksheets + output_folder
 
@@ -84,11 +85,9 @@ def get_files():
         if os.path.isfile(os.path.join(folder, file))
     )
     files_list = collections.defaultdict(list)
-    #pattern = re.compile("__(\S+)__")
     for filename in files:
         results = re.search("__(\S+)__", filename)
         project = results.group(1)
-        #project = pattern.search(filename)[1]
         filepath = folder + "\\" + filename
         files_list[project].append(filepath)
     files_merged = dict(files_list)
@@ -117,14 +116,14 @@ class Project:
         """
         Process WES Runs
         """
-        #destination_of_files = "S:\\Genetics\\Bioinformatics\\NGS\\depthofcoverage\\genesummaries"
-        destination_of_files = "H:\\Tickets\\automate_end_of_duty_tasks\\Results\\WES"
+        destination_of_files = "S:\\Genetics\\Bioinformatics\\NGS\\depthofcoverage\\genesummaries"
+        #destination_of_files = "H:\\Tickets\\automate_end_of_duty_tasks\\Results\\WES"
         for file_path in self.project_files:
             csv_file = pandas.read_csv(file_path, index_col=None)
             url_wes = get_data(csv_file, '"{}"'.format(destination_of_files))
             output = download_data(url_wes)
             list_of_stings = file_path.split("\\")
-            save_log_file(output, list_of_stings[-1].replace('.csv',''))
+            save_log_file(output, list_of_stings[-1].replace('.csv','.txt'))
             print(output)
     def process_SNP(self):
         """
@@ -136,26 +135,23 @@ class Project:
             url_snp = get_data(csv_file, '"{}"'.format(destination_of_VCFs))
             output = download_data(url_snp)
             list_of_stings = file_path.split("\\")
-            save_log_file(output, list_of_stings[-1].replace('.csv',''))
+            save_log_file(output, list_of_stings[-1].replace('.csv','.txt'))
             print(output)
     def process_MokaPipe(self):
         """
         Process MokaPipe Runs
         """
         # Path to St George's transfer folder
-        #StG_transfer = "P:\\DNA LAB\\StG SFTP\\StG SFTP outgoing"
-        StG_transfer = 'H:\\Tickets\\automate_end_of_duty_tasks\\Results\\StG_outgoing'
-        #pattern = re.compile("\\(NGS\S+)$")
+        StG_transfer = "P:\\DNA LAB\\StG SFTP\\StG SFTP outgoing"
+        #StG_transfer = 'H:\\Tickets\\automate_end_of_duty_tasks\\Results\\StG_outgoing'
         for file_path in self.project_files:
             # asks for final part to the destination folder
             output_folder = ask_for_folder()
              # create directory for RPKM and download data
             path_to_RPKM = output_folder + "\\RPKM"
             destination_of_Coverage = output_folder + "\\coverage"
-            destination_of_FHPRS = output_folder + "\\FH_PRS"
             os.mkdir(path_to_RPKM)
             os.mkdir(destination_of_Coverage)
-            os.mkdir(destination_of_FHPRS)
             # import csv file to pandas df
             csv_file = pandas.read_csv(file_path, index_col=None)
             # get data frames from the master df
@@ -170,29 +166,34 @@ class Project:
             os.mkdir(StG_transfer_folder)
             os.mkdir(StG_transfer_folder + "\\coverage")
             os.mkdir(StG_transfer_folder + "\\RPKM")
-            os.mkdir(StG_transfer_folder + "\\FH_PRS")
             # Download data for StG Transfer
             url_RPKM = get_data(df_RPKM, '"{}"'.format(path_to_RPKM))
             url_coverage = get_data(df_coverage, '"{}"'.format(destination_of_Coverage))
-            url_FHPRS = get_data(df_FHPRS, '"{}"'.format(destination_of_FHPRS))
             url_StG_RPKM = get_data(df_RPKM, '"{}"'.format(StG_transfer_folder + "\\RPKM"))
             url_StG_coverage = get_data_StG(df_coverage, '"{}"'.format(StG_transfer_folder + "\\coverage"))
-            url_StG_FHPRS = get_data_StG(df_FHPRS, '"{}"'.format(StG_transfer_folder + "\\FH_PRS"))
+            if len(df_FHPRS.index) >= 1 :
+                destination_of_FHPRS = output_folder + "\\FH_PRS"
+                os.mkdir(destination_of_FHPRS)
+                os.mkdir(StG_transfer_folder + "\\FH_PRS")
+                url_FHPRS = get_data(df_FHPRS, '"{}"'.format(destination_of_FHPRS))
+                url_StG_FHPRS = get_data_StG(df_FHPRS, '"{}"'.format(StG_transfer_folder + "\\FH_PRS"))
+            else:
+                url_FHPRS = ''
+                url_StG_FHPRS = ''
             all_url =  url_RPKM + url_coverage + url_FHPRS + url_StG_RPKM + url_StG_coverage + url_StG_FHPRS
             output = download_data(all_url)
             list_of_stings = file_path.split("\\")
-            save_log_file(output, list_of_stings[-1].replace('.csv',''))
+            save_log_file(output, list_of_stings[-1].replace('.csv','.txt'))
             print(output)
     def process_TSO(self):
         """
         Process TSO500 Runs
         """
         # destination for the files to be downloaded to:
-        destination_of_Results = 'H:\\Tickets\\automate_end_of_duty_tasks\\Results'
-        #destination_of_Results = "P:\\Cancer_Genetics\\TSO500\\Results"
+        #destination_of_Results = 'H:\\Tickets\\automate_end_of_duty_tasks\\Results'
+        destination_of_Results = "P:\\Cancer_Genetics\\TSO500\\Results"
         # create folder woth project name
         for file_path in self.project_files:
-            print(file_path)
             csv_file = pandas.read_csv(file_path, index_col=None)
             df_results = csv_file[csv_file['type'] == 'Results']
             df_coverage = csv_file[csv_file['type'] == 'coverage']
@@ -216,7 +217,7 @@ class Project:
             all_url = url_coverage + url_sompy + url_results
             output = download_data(all_url)
             list_of_stings = file_path.split("\\")
-            save_log_file(output, list_of_stings[-1].replace('.csv',''))
+            save_log_file(output, list_of_stings[-1].replace('.csv','.txt'))
             print(output)
     def archive_files(self):
         """
