@@ -17,8 +17,14 @@ from tqdm import tqdm
 """
 Automate End of Duty Tasks
 Python 3
-"""
+Developer: Igor Malashchuk
+Email: igor.malashchuk@nhs.net
+Date released: 08/07/2022
 
+To run the script: 
+python automateEODT.py -7d
+"""
+version = "Version 1.0.0"
 dxpy.set_security_context({"auth_token_type": "Bearer", "auth_token": token})
 
 cur_path_script = os.path.realpath(__file__)
@@ -40,7 +46,8 @@ LOG_FILENAME = datetime.datetime.now().strftime(
 )
 
 log_setup(cur_path + "/LOG/" + LOG_FILENAME)
-
+log = logging.getLogger(datetime.datetime.now().strftime("log_%d/%m/%Y_%H:%M:%S"))
+log.info(version)
 
 def download_url(file_ID, project_ID):
     """
