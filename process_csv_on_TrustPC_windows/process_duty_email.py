@@ -67,7 +67,7 @@ def download_data(all_urls):
         for one_array in split_np_array:
             merged_sub_array = " ".join(one_array)
             urls_list.append(merged_sub_array)
-    full_process = "Version 2.0.0\n"
+    full_process = "Version {}\n".format(version)
     for urls in urls_list:
         try:
             process = subprocess.check_output(
