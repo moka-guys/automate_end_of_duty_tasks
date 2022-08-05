@@ -1,9 +1,9 @@
 """
 Process duty emails
-Version 1.0.0
+Version 2.0.0
 Developer: Igor Malashchuk 
 Email: igor.malashchuk@nhs.net
-Date Modified: 08/07/2022
+Date Modified: 05/08/2022
 """
 import subprocess
 import os
@@ -11,17 +11,19 @@ import re
 import collections
 from datetime import datetime
 import pandas
+import math
+import numpy as np
 
-# run script: S:\Genetics_Data2\Array\Software\Python-3.6.5\python process_duty_email.py
-
+# run script: S:\Genetics_Data2\Array\Software\Python-3.6.5\python S:\Genetics_Data2\Array\Software\duty_bioinformatician_scripts\process_duty_email.py
+version = "2.0.0"
 def ask_for_folder():
     """
     For MokaPipe the destination folder can be different.
     Therefore this function ask the user to enter the last part of the folder
     """
     output_folder = ""
-    path_worksheets = "P:\\DNA LAB\\Current\\NGS worksheets\\"
-    #path_worksheets = "H:\\Tickets\\automate_end_of_duty_tasks\\Results\\"
+    #path_worksheets = "P:\\DNA LAB\\Current\\NGS worksheets\\"
+    path_worksheets = "H:\\Tickets\\automate_end_of_duty_tasks\\Results\\"
     print("Part of destination is:{}".format(path_worksheets))
     while len(output_folder) == 0:
         output_folder = input(
@@ -37,23 +39,51 @@ def ask_for_folder():
 def get_data(df, path_to_folder):
     """
     This function reads the data frame (df)..
-    From the csv file it obtains the download links and uses a powershell script to download the links to the destination folder.
+    From the csv file it obtains the download links and creates a string argument.   
     """
     all_urls = ""
     for index, row in df.iterrows():
-        line = row['url'] + "," + path_to_folder + " "
+        line = row['url'] + "," + path_to_folder + "£$%"
         all_urls += line
     return all_urls
 
-def download_data(urls):
-    process = subprocess.check_output(
-            [
-                "powershell.exe",
-                "S:\\Genetics_Data2\\Array\\Software\\duty_bioinformatician_scripts\\get_DNAnexus_url.ps1",
-                urls,
-            ]
-        )
-    return process
+def download_data(all_urls):
+    """"
+    This function checks if the string argument is less than the limit. 
+    If it is longer than the character length limit thee string is split into multiple smaller string arguments. 
+    The function then downloads the data using powershell.
+    """
+    limit = 8000
+    result = math.ceil(len(all_urls)/limit)
+    if result <= 1:
+        urls_array = all_urls.split("£$%")
+        merged_array = " ".join(urls_array)
+        urls_list = [merged_array]
+    else:
+        urls_array = all_urls.split("£$%")
+        np_array = np.array(urls_array)
+        split_np_array = np.array_split(np_array, result)
+        urls_list = []
+        for one_array in split_np_array:
+            merged_sub_array = " ".join(one_array)
+            urls_list.append(merged_sub_array)
+    full_process = "Version 2.0.0\n"
+    for urls in urls_list:
+        try:
+            process = subprocess.check_output(
+                    [
+                        "powershell",
+                        #"getDNAnexusURL",
+                        "S:\\Genetics_Data2\\Array\\Software\\duty_bioinformatician_scripts\\get_DNAnexus_url.ps1",
+                        urls,
+                    ], 
+                    shell=True,
+                    stderr=subprocess.STDOUT
+                ) 
+            full_process += str(process.decode('utf-8') + "\n")
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
+    return full_process
 
 def get_data_StG(df, path_to_folder):
     """
@@ -63,7 +93,7 @@ def get_data_StG(df, path_to_folder):
     StG_urls = ""
     for index, row in df.iterrows():
         if bool(re.search("StG", row["url"])):  
-            line = row['url'] + "," + path_to_folder + " "
+            line = row['url'] + "," + path_to_folder + "£$%"
             StG_urls += line
     return StG_urls
 
@@ -116,8 +146,8 @@ class Project:
         """
         Process WES Runs
         """
-        destination_of_files = "S:\\Genetics\\Bioinformatics\\NGS\\depthofcoverage\\genesummaries"
-        #destination_of_files = "H:\\Tickets\\automate_end_of_duty_tasks\\Results\\WES"
+        #destination_of_files = "S:\\Genetics\\Bioinformatics\\NGS\\depthofcoverage\\genesummaries"
+        destination_of_files = "H:\\Tickets\\TEST\\genesumarries"
         for file_path in self.project_files:
             csv_file = pandas.read_csv(file_path, index_col=None)
             url_wes = get_data(csv_file, '"{}"'.format(destination_of_files))
@@ -129,7 +159,8 @@ class Project:
         """
         Process SNP Runs
         """
-        destination_of_VCFs = "P:\\Bioinformatics\\VCFs_Andrew"
+        #destination_of_VCFs = "P:\\Bioinformatics\\VCFs_Andrew"
+        destination_of_VCFs = "H:\\Tickets\\TEST\\VCFs_Andrew"
         for file_path in self.project_files:
             csv_file = pandas.read_csv(file_path, index_col=None)
             url_snp = get_data(csv_file, '"{}"'.format(destination_of_VCFs))
@@ -142,8 +173,8 @@ class Project:
         Process MokaPipe Runs
         """
         # Path to St George's transfer folder
-        StG_transfer = "P:\\DNA LAB\\StG SFTP\\StG SFTP outgoing"
-        #StG_transfer = 'H:\\Tickets\\automate_end_of_duty_tasks\\Results\\StG_outgoing'
+        #StG_transfer = "P:\\DNA LAB\\StG SFTP\\StG SFTP outgoing"
+        StG_transfer = 'H:\\Tickets\\automate_end_of_duty_tasks\\Results\\StG_outgoing'
         for file_path in self.project_files:
             # asks for final part to the destination folder
             output_folder = ask_for_folder()
@@ -201,7 +232,7 @@ class Project:
             search_results1 = re.search(r"_(TSO\d+).csv", file_path)
             search_results2 = re.search(r"002(_\S+)_TSO", file_path)
             folder_name = (
-            search_results1.group(1) + search_results2.group(1)
+            search_results1.group(1) + search_results2.group(1) + "_AUTOMATE_DUTY_TEST"
             )
             path_to_folder = destination_of_Results + "\\" + folder_name
             # create subfolders called coverage and Results and download data:
