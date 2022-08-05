@@ -1,4 +1,4 @@
-# Works like wget, pass URLs to script to download them to destination folder each argument is a sting containing source path and destination separated by comma
+# Works like wget, pass URLs to script to download them 
 # dl_urls.ps1 url [url path]
 Import-Module BitsTransfer
 Add-Type -AssemblyName System.IO.Compression.FileSystem
@@ -16,7 +16,7 @@ Write-Output "Downloading $path to $output"
 Start-BitsTransfer -Source $path -Destination $output
 if ($path.Contains("/Results.zip")) {
     $filetoextract=$output+"\Results.zip"
-    $extactpath=$output+"\Results"
+    $extractpath=$output+"\Results"
     Unzip $filetoextract $extractpath
     Remove-Item $filetoextract
 }
