@@ -3,7 +3,7 @@ Process duty emails
 Version 2.0.0
 Developer: Igor Malashchuk 
 Email: igor.malashchuk@nhs.net
-Date Modified: 05/08/2022
+Date Modified: 08/08/2022
 """
 import subprocess
 import os
@@ -14,7 +14,8 @@ import pandas
 import math
 import numpy as np
 
-# run script: S:\Genetics_Data2\Array\Software\Python-3.6.5\python S:\Genetics_Data2\Array\Software\duty_bioinformatician_scripts\process_duty_email.py
+# Run script in Powershell: duty
+# run script in command prompt: S:\Genetics_Data2\Array\Software\Python-3.6.5\python S:\Genetics_Data2\Array\Software\duty_bioinformatician_scripts\process_duty_email.py
 version = "2.0.0"
 def ask_for_folder():
     """
@@ -27,7 +28,7 @@ def ask_for_folder():
     print("Part of destination is:{}".format(path_worksheets))
     while len(output_folder) == 0:
         output_folder = input(
-            'Please complete the final part of the destination folder \n(e.g."NGS_401 to 500\\NGS484" place inside double quotes in PowerShell):'
+            'Please complete the final part of the destination folder \n(e.g."NGS_401 to 500\\NGS484")\nMay need to place inside double quotes in Powershell:'
         )
         destination_folder = path_worksheets + output_folder
         print("The destination folder is : {}".format(destination_folder))
@@ -39,7 +40,7 @@ def ask_for_folder():
 def get_data(df, path_to_folder):
     """
     This function reads the data frame (df)..
-    From the csv file it obtains the download links and creates a string argument.   
+    From the df file it obtains the download links and creates a string argument.   
     """
     all_urls = ""
     for index, row in df.iterrows():
@@ -85,10 +86,24 @@ def download_data(all_urls):
             raise RuntimeError("command '{}' return with error (code {}): {}".format(e.cmd, e.returncode, e.output))
     return full_process
 
+def get_data_GSTT(df, path_to_folder):
+    """
+    This function reads the data frame (df)..
+    From the df file it obtains the download links for files to be used by Viapath at GSTT creates a string argument.
+    
+    """
+    GSTT_urls = ""
+    for index, row in df.iterrows():
+        if not bool(re.search("StG", row["url"])):  
+            line = row['url'] + "," + path_to_folder + "£$%"
+            GSTT_urls += line
+    return GSTT_urls
+
 def get_data_StG(df, path_to_folder):
     """
-    This function reads the csv file.
-    From the csv file it obtains the download links and uses a powershell script to download the links to the destination folder for StG transfer.
+    This function reads the data frame (df)..
+    From the df file it obtains the download links for files destined for StG transfer and creates a string argument.
+    
     """
     StG_urls = ""
     for index, row in df.iterrows():
@@ -199,14 +214,14 @@ class Project:
             os.mkdir(StG_transfer_folder + "\\RPKM")
             # Download data for StG Transfer
             url_RPKM = get_data(df_RPKM, '"{}"'.format(path_to_RPKM))
-            url_coverage = get_data(df_coverage, '"{}"'.format(destination_of_Coverage))
+            url_coverage = get_data_GSTT(df_coverage, '"{}"'.format(destination_of_Coverage))
             url_StG_RPKM = get_data(df_RPKM, '"{}"'.format(StG_transfer_folder + "\\RPKM"))
             url_StG_coverage = get_data_StG(df_coverage, '"{}"'.format(StG_transfer_folder + "\\coverage"))
             if len(df_FHPRS.index) >= 1 :
                 destination_of_FHPRS = output_folder + "\\FH_PRS"
                 os.mkdir(destination_of_FHPRS)
                 os.mkdir(StG_transfer_folder + "\\FH_PRS")
-                url_FHPRS = get_data(df_FHPRS, '"{}"'.format(destination_of_FHPRS))
+                url_FHPRS = get_data_GSTT(df_FHPRS, '"{}"'.format(destination_of_FHPRS))
                 url_StG_FHPRS = get_data_StG(df_FHPRS, '"{}"'.format(StG_transfer_folder + "\\FH_PRS"))
             else:
                 url_FHPRS = ''
