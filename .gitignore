@@ -9,6 +9,9 @@ WES/*
 .amazon_email_pw
 .amazon_email_username
 send_email.py
+test.py
+test2.py
+test3.py
 
 LOG/*
 !LOG/.gitkeep
