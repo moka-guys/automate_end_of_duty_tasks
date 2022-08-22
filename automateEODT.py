@@ -31,15 +31,13 @@ cur_path_script = os.path.realpath(__file__)
 cur_path_list = cur_path_script.split("/")
 cur_path = "/".join(cur_path_list[: (len(cur_path_list) - 2)])
 env_path = "/".join(cur_path_list[: (len(cur_path_list) - 1)])
-print(cur_path)
+
 pattern = re.compile("(project-\S+)__\S+__")
 env = Environment(
     loader=FileSystemLoader(env_path + "/email_templates"),
     autoescape=select_autoescape(["html"]),
 )
 template = env.get_template("email.html")
-# python3 = "S:\\Genetics_Data2\\Array\\Software\\Python-3.6.5\\python"
-# duty_bio_scripts = "S:\\Genetics_Data2\\Array\\Software\\duty_bioinformatician_scripts\\process_duty_email.py"
 
 LOG_FILENAME = datetime.datetime.now().strftime(
     "%d_%m_%Y_%H_%M_%S_automate_duty_tasks.log"
@@ -332,8 +330,12 @@ class WES(Project):
             )
             filepath = cur_path + self.folder + filename
             create_text_file(filepath.replace(".csv", ".txt"))
+            # Email content:
+                # Subject:
             subject = "{} run: ".format(self.proj_type) + self.name
+                # Text message specific to the project
             text = ""
+                # Fill the template html 
             html = template.render(
                 TSO_message=text,
                 num_jobs=self.jobs[1],
@@ -342,6 +344,7 @@ class WES(Project):
                 num_of_csv=1,
                 number_of_files=len(download_links.index),
             )
+                # Send email with csv attchment:
             send_email(
                 config.email_send_to, subject, html, [download_links], [filename]
             )
@@ -377,6 +380,10 @@ class SNP(Project):
         return data
 
     def make_csv_and_email(self, list):
+        """
+        Create CSV and send email
+        For detailed comments see WES
+        """
         if len(list) >= 1:
             download_links = create_download_links(
                 list, [self.proj_type, self.name], "output"
@@ -430,6 +437,10 @@ class MokaPipe(Project):
         return [rpkm, coverage, fh_prs]
 
     def make_csv_and_email(self, list):
+        """
+        Create CSV and send email
+        For detailed comments see WES
+        """
         rpkm = list[0]
         coverage = list[1]
         fh_prs = list[2]
@@ -517,6 +528,10 @@ class TSO(Project):
         return [results, gene + exon, sompy]
 
     def make_csv_and_email(self, list):
+        """
+        Create CSV and send email
+        For detailed comments see WES
+        """
         results = list[0]
         coverage = list[1]
         sompy = list[2]
@@ -611,6 +626,7 @@ if __name__ == "__main__":
     Variouse steps are logged to a text file
     """
     for proj_type in patterns:
+        # Find porduction projects by search pattern in the time frame speicfied by length. See 'key for length' above.  
         projects = Projects(proj_type, patterns[proj_type], length)
         print("the project is: {}".format(proj_type))
         log = logging.getLogger(
@@ -688,6 +704,7 @@ if __name__ == "__main__":
                         project.message2()
         else:
             projects.no_projects_found()
+    # Archive the text files produced for each DNAnexus project (if the project is older than 7 days) processed by this script :
     archive_after7days("/SNP")
     archive_after7days("/MokaPipe")
     archive_after7days("/TSO500")
