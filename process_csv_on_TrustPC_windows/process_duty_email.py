@@ -16,7 +16,7 @@ import config
 
 # Run script in Powershell: duty
 # run script in command prompt: S:\Genetics_Data2\Array\Software\Python-3.6.5\python S:\Genetics_Data2\Array\Software\duty_bioinformatician_scripts\process_duty_email.py
-version = "2.0.0"
+version = "1.0.0"
 
 def ask_for_folder():
     """
