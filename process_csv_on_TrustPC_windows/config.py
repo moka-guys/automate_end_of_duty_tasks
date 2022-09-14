@@ -17,4 +17,4 @@ WES_destination_of_files = "S:\\Genetics\\Bioinformatics\\NGS\\depthofcoverage\\
 
 #St George's transfer folder:
 StG_transfer = "P:\\DNA LAB\\StG SFTP\\StG SFTP outgoing"
-StG_transfer = 'H:\\Tickets\\automate_end_of_duty_tasks\\Results\\StG_outgoing'
+#StG_transfer = 'H:\\Tickets\\automate_end_of_duty_tasks\\Results\\StG_outgoing'
