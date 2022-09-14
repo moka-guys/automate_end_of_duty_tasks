@@ -16,7 +16,7 @@ import config
 
 # Run script in Powershell: duty
 # run script in command prompt: S:\Genetics_Data2\Array\Software\Python-3.6.5\python S:\Genetics_Data2\Array\Software\duty_bioinformatician_scripts\process_duty_email.py
-version = "2.0.1"
+version = "2.0.0"
 
 def ask_for_folder():
     """
@@ -115,7 +115,7 @@ def get_data_StG(df, path_to_folder):
 def save_log_file(text, filename): 
     cur_time = datetime.now()
     cur_time_string = cur_time.strftime("%Y_%m_%d__%H_%M_%S_")
-    log_path =  config.CSVread_folder + "\\process_logs\\" + "Finished_on_{}_{}.txt".format(cur_time_string, filename)
+    log_path = "{}\\process_logs\\Finished_on_{}_{}.txt".format(config.CSVread_folder, cur_time_string, filename)
     with open(log_path, 'w') as f:
         f.write(text)
 
