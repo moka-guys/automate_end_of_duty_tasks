@@ -13,6 +13,7 @@ from datetime import datetime
 import pandas
 import math
 import numpy as np
+import config
 
 # Run script in Powershell: duty
 # run script in command prompt: S:\Genetics_Data2\Array\Software\Python-3.6.5\python S:\Genetics_Data2\Array\Software\duty_bioinformatician_scripts\process_duty_email.py
@@ -23,8 +24,7 @@ def ask_for_folder():
     Therefore this function ask the user to enter the last part of the folder
     """
     output_folder = ""
-    #path_worksheets = "P:\\DNA LAB\\Current\\NGS worksheets\\"
-    path_worksheets = "H:\\Tickets\\automate_end_of_duty_tasks\\Results\\"
+    path_worksheets = config.MokaPipe_path_worksheets
     print("Part of destination is:{}".format(path_worksheets))
     while len(output_folder) == 0:
         output_folder = input(
@@ -161,8 +161,7 @@ class Project:
         """
         Process WES Runs
         """
-        #destination_of_files = "S:\\Genetics\\Bioinformatics\\NGS\\depthofcoverage\\genesummaries"
-        destination_of_files = "H:\\Tickets\\TEST\\genesumarries"
+        destination_of_files = config.WES_destination_of_files
         for file_path in self.project_files:
             csv_file = pandas.read_csv(file_path, index_col=None)
             url_wes = get_data(csv_file, '"{}"'.format(destination_of_files))
@@ -174,8 +173,7 @@ class Project:
         """
         Process SNP Runs
         """
-        #destination_of_VCFs = "P:\\Bioinformatics\\VCFs_Andrew"
-        destination_of_VCFs = "H:\\Tickets\\TEST\\VCFs_Andrew"
+        destination_of_VCFs = config.SNP_destination_of_VCFs
         for file_path in self.project_files:
             csv_file = pandas.read_csv(file_path, index_col=None)
             url_snp = get_data(csv_file, '"{}"'.format(destination_of_VCFs))
@@ -188,8 +186,7 @@ class Project:
         Process MokaPipe Runs
         """
         # Path to St George's transfer folder
-        #StG_transfer = "P:\\DNA LAB\\StG SFTP\\StG SFTP outgoing"
-        StG_transfer = 'H:\\Tickets\\automate_end_of_duty_tasks\\Results\\StG_outgoing'
+        StG_transfer = config.StG_transfer
         for file_path in self.project_files:
             # asks for final part to the destination folder
             output_folder = ask_for_folder()
@@ -236,8 +233,7 @@ class Project:
         Process TSO500 Runs
         """
         # destination for the files to be downloaded to:
-        #destination_of_Results = 'H:\\Tickets\\automate_end_of_duty_tasks\\Results'
-        destination_of_Results = "P:\\Cancer_Genetics\\TSO500\\Results"
+        destination_of_Results = config.TSO_destination_of_Results
         # create folder woth project name
         for file_path in self.project_files:
             csv_file = pandas.read_csv(file_path, index_col=None)
@@ -267,7 +263,7 @@ class Project:
             print(output)
     def archive_files(self):
         """
-        Modufy the csv file to remove data from it and insert a message of when it was compelted and by whome.
+        Modify the csv file to remove data from it and insert a message of when it was compelted and by whome.
         """
         # get the user infromation and current date
         #user = os.getlogin() -> does not work when executing the script from PowerShell
