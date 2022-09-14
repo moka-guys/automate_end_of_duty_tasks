@@ -1,9 +1,8 @@
 """
 Process duty emails
-Version 2.0.0
 Developer: Igor Malashchuk 
 Email: igor.malashchuk@nhs.net
-Date Modified: 08/08/2022
+Date Modified: 14/09/2022
 """
 import subprocess
 import os
@@ -17,7 +16,8 @@ import config
 
 # Run script in Powershell: duty
 # run script in command prompt: S:\Genetics_Data2\Array\Software\Python-3.6.5\python S:\Genetics_Data2\Array\Software\duty_bioinformatician_scripts\process_duty_email.py
-version = "2.0.0"
+version = "2.0.1"
+
 def ask_for_folder():
     """
     For MokaPipe the destination folder can be different.
@@ -115,7 +115,7 @@ def get_data_StG(df, path_to_folder):
 def save_log_file(text, filename): 
     cur_time = datetime.now()
     cur_time_string = cur_time.strftime("%Y_%m_%d__%H_%M_%S_")
-    log_path =  "P:\\Bioinformatics\\Duty_Bioinformatics_CSV\\process_logs\\" + "Finished_on_{}_{}.txt".format(cur_time_string, filename)
+    log_path =  config.CSVread_folder + "\\process_logs\\" + "Finished_on_{}_{}.txt".format(cur_time_string, filename)
     with open(log_path, 'w') as f:
         f.write(text)
 
@@ -123,7 +123,7 @@ def get_files():
     """
     This function gets the paths for csv files download by duty bioinformatician to the Duty_Bioinformatics_CSV folder.
     """
-    folder = "P:\\Bioinformatics\\Duty_Bioinformatics_CSV"
+    folder = config.CSVread_folder
     files = (
         file
         for file in os.listdir(folder)
