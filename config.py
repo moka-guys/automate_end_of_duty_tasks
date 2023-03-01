@@ -45,6 +45,10 @@ PER_RUNTYPE_DOWNLOADS = {
             "folder": "/PRS_output",
             "regex": "\S+.txt$",
         },
+        "polyedge": {
+            "folder": "/polyedge",
+            "regex": "\S+_polyedge.pdf$",
+        },
     },
     "SNP": {
         "vcfs": {
