@@ -22,6 +22,11 @@ import json
 # TODO make it so if it doesn't match runtypes in config, it sends an email
 # saying there is nothing to process
 
+# TODO switch to readiing git tag from VERSION
+
+# TODO add output directories column to CSV so that output locations can just
+# be read from the CSV file - avoid further update
+
 
 class GenerateOutput:
     """

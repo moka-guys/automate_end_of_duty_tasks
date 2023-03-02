@@ -1,4 +1,4 @@
-""" Email server settings
+""" Config file for duty_csv
 """
 
 import os
@@ -73,5 +73,36 @@ PER_RUNTYPE_DOWNLOADS = {
             "folder": "/QC",
             "regex": "\S+_MergedSmallVariants.genome.vcf.stats.csv$",
         },
+    },
+}
+
+
+TEST_ = {
+    "csv_dir": ,
+
+
+
+}
+
+# TODO incorporate these variables / logic into script
+P_BIOINF = "P:\Bioinformatics"
+P_BIOINF_TESTING = os.path.join(P_BIOINF, "testing\process_duty_csv")
+
+GSTT_PATHS = {
+    "TEST": {
+        "CSV": os.path.join(P_BIOINF_TESTING, "Duty_Bioinformatics_CSV"),
+        "WES": os.path.join(P_BIOINF_TESTING, "WES"),
+        "MokaPIPE": os.path.join(P_BIOINF_TESTING, "MokaPIPE"),
+        "SNP": os.path.join(P_BIOINF_TESTING, "SNP"),
+        "TSO500": os.path.join(P_BIOINF_TESTING, "TSO500"),
+        "StG": os.path.join(P_BIOINF_TESTING, "StG"),
+    },
+    "PROD": {
+        "CSV": os.path.join(P_BIOINF, "Duty_Bioinformatics_CSV"),
+        "WES": "S:\Genetics\Bioinformatics\NGS\depthofcoverage\genesummaries",
+        "MokaPIPE": "P:\DNA LAB\Current\NGS worksheets\%s",
+        "SNP": os.path.join(P_BIOINF, "VCFs_Andrew"),
+        "TSO500": "S:\Genetics_Data2\TSO500",
+        "StG": "P:\DNA LAB\StG SFTP\StG SFTP outgoing",
     },
 }
