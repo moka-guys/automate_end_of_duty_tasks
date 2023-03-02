@@ -4,6 +4,7 @@
 Generate DNAnexus download links for end of run processing file downloads.
 Save to a .csv file.
 """
+import sys
 import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -386,22 +387,28 @@ def git_tag():
 
 if __name__ == "__main__":
     args = arg_parse()
-    dxpy.config["DX_USERNAME"] = os.environ["DX_USERNAME"]
-    dxpy.config["DX_SECURITY_CONTEXT"] = os.environ["DX_SECURITY_CONTEXT"]
-    dxpy.config["DX_WORKSPACE_ID"] = os.environ["DX_WORKSPACE_ID"]
-    dxpy.config["DX_PROJECT_CONTEXT_ID"] = os.environ["DX_PROJECT_CONTEXT_ID"]
-    dxpy.config["DX_APISERVER_PROTOCOL"] = os.environ["DX_APISERVER_PROTOCOL"]
-    dxpy.config["DX_APISERVER_HOST"] = os.environ["DX_APISERVER_HOST"]
-    dxpy.config["DX_APISERVER_PORT"] = os.environ["DX_APISERVER_PORT"]
-    dxpy.set_security_context(json.loads(dxpy.config["DX_SECURITY_CONTEXT"]))
 
-    print(dxpy.config["DX_USERNAME"])
-    print(dxpy.config["DX_SECURITY_CONTEXT"])
-    print(dxpy.config["DX_WORKSPACE_ID"])
-    print(dxpy.config["DX_PROJECT_CONTEXT_ID"])
-    print(dxpy.config["DX_APISERVER_PROTOCOL"])
-    print(dxpy.config["DX_APISERVER_HOST"])
-    print(dxpy.config["DX_APISERVER_PORT"])
+    # read access token fromm environment
+    token = os.environ["DX_API_TOKEN"]
+    try:
+        assert token
+    except (AssertionError, KeyError):
+        print("No DNAnexus token found in environment (DX_API_TOKEN)")
+        sys.exit(1)
+
+    # set security context of dxpy instance (and ENV just in case)
+    sec_context = '{"auth_token":"' + token + '", "auth_token_type": "Bearer"}'
+    os.environ["DX_SECURITY_CONTEXT"] = sec_context
+    dxpy.set_security_context(json.loads(sec_context))
+
+    # check dxpy is authnticated
+    try:
+        whoami = dxpy.api.system_whoami()
+    except Exception as e:
+        print("Unable to authenticate with DNAnexus API: " + str(e))
+        sys.exit(1)
+    else:
+        print(f'Authenticated as {whoami}')
 
     # TODO set DX_PROJECT_CONTEXT_ID as project_id input
     # TODO set WORKSPACE_ID
