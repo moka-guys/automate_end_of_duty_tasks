@@ -8,4 +8,4 @@ ADD ./ /duty_csv
 RUN pip3 install -r /duty_csv/requirements.txt
 RUN ln /duty_csv/duty_csv.py /usr/local/bin/polyedge.py
 WORKDIR /outputs
-# ENTRYPOINT [ "python3","/duty_csv/duty_csv.py" ]
+ENTRYPOINT [ "python3","/duty_csv/duty_csv.py" ]
