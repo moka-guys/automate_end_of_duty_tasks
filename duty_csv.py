@@ -16,11 +16,11 @@ import dxpy
 import jinja2
 import config
 from logger import Logger
+import json
 
 
 # TODO make it so if it doesn't match runtypes in config, it sends an email
 # saying there is nothing to process
-# TODO add polyedge files to download requirements
 
 
 class GenerateOutput:
@@ -36,8 +36,7 @@ class GenerateOutput:
         get_runtype()
             String comparison with config variables to detetrmine runtype
         get_jobs()
-            Find number of executions/jobs for a given project and retrieve
-            outcomes of the jobs e.g. done, running, failed etc
+            Find number of executions/jobs for a given project
         get_data_dicts()
             Search DNAnexus to find file data objects based on
             config-defined regexp patterns
@@ -56,20 +55,14 @@ class GenerateOutput:
             Use smtplib to send an email
     """
 
-    def __init__(
-        self, project_name, project_id, auth_token, email_user, email_pw
-    ):
+    def __init__(self, project_name, project_id, email_user, email_pw):
         """
         Constructor for the GenerateOutput class
             :param project_name (str):  DNAnexus project name
             :param project_id (str):    DNAnexus project ID
-            :param auth_token (str):    DNAnexus auth token
             :param email_user (str):    Mail server username
             :param email_pw (str):      Mail server password
         """
-        dxpy.set_security_context(
-            {"auth_token_type": "Bearer", "auth_token": auth_token}
-        )
         self.email_user = email_user
         self.email_pw = email_pw
         self.project_name = project_name
@@ -85,7 +78,7 @@ class GenerateOutput:
             self.project_name,
             self.runtype,
         )
-        self.project_jobs, self.jobstates_list = self.get_jobs()
+        self.project_jobs = self.get_jobs()
         self.file_dict = config.PER_RUNTYPE_DOWNLOADS[self.runtype]
         self.data_obj_dict, self.data_num_dict = self.get_data_dicts()
         self.url_dataframe = self.get_url_dataframe()
@@ -104,11 +97,13 @@ class GenerateOutput:
         self.html = self.generate_html()
         self.email_subject = f"{self.runtype} run: {self.project_name}"
         self.email_msg = self.get_message_obj()
-        self.send_email()
+        # self.send_email()
         self.logger.info("Script completed")
 
     def get_runtype(self):
-        """String comparison with config variables to detetrmine runtype"""
+        """
+        String comparison with config variables to detetrmine runtype
+        """
         for runtype in config.RUNTYPE_IDENTIFIERS:
             if all(
                 runtype in self.project_name
@@ -119,11 +114,8 @@ class GenerateOutput:
 
     def get_jobs(self):
         """
-        Find number of executions/jobs for a given project and retrieve
-        outcomes of the jobs e.g. done, running, failed etc
+        Find number of executions/jobs for a given project
             :return project_jobs (list):    List of jobs within project
-            :return states (list):          List of job status for all
-                                            jobs in project
         """
         project_jobs = list(
             dxpy.bindings.search.find_executions(
@@ -137,7 +129,7 @@ class GenerateOutput:
         self.logger.info(
             "Collected job states for project %s", self.project_name
         )
-        return project_jobs, list(set(states))
+        return project_jobs
 
     def get_data_dicts(self):
         """
@@ -254,7 +246,6 @@ class GenerateOutput:
         html = self.template.render(
             TSO_message=tso_message,
             num_jobs=len(self.project_jobs),
-            jobs_executed=self.jobstates_list,
             project_name=self.project_name,
             number_of_files=sum(self.data_num_dict.values()),
             files_by_filetype=files_by_filetype,
@@ -338,13 +329,6 @@ def arg_parse():
         required=True,
     )
     requirednamed.add_argument(
-        "-A",
-        "--auth_token",
-        type=str,
-        help="DNAnexus authentication token",
-        required=True,
-    )
-    requirednamed.add_argument(
         "-EU",
         "--email_user",
         type=str,
@@ -358,7 +342,31 @@ def arg_parse():
         help="Password for mail server",
         required=True,
     )
+    requirednamed.add_argument(
+        "-TP",
+        "--tso_pannumbers",
+        type=str,
+        help="Space separated pan numbers",
+        required=True,
+        nargs="+",
+    )
     return vars(parser.parse_args())
+
+
+def update_tso_config_regex():
+    """
+    Update config TSO500 regex incorporating command-line parsed Pan numbers
+    """
+    for filetype in [
+        "gene_level_coverage",
+        "exon_level_coverage",
+        "results_zip",
+    ]:
+        config.PER_RUNTYPE_DOWNLOADS["TSO500"][filetype][
+            "regex"
+        ] = config.PER_RUNTYPE_DOWNLOADS["TSO500"][filetype]["regex"].format(
+            ("|").join(args["tso_pannumbers"])
+        )
 
 
 def git_tag():
@@ -378,11 +386,34 @@ def git_tag():
 
 if __name__ == "__main__":
     args = arg_parse()
+    dxpy.config["DX_USERNAME"] = os.environ["DX_USERNAME"]
+    dxpy.config["DX_SECURITY_CONTEXT"] = os.environ["DX_SECURITY_CONTEXT"]
+    dxpy.config["DX_WORKSPACE_ID"] = os.environ["DX_WORKSPACE_ID"]
+    dxpy.config["DX_PROJECT_CONTEXT_ID"] = os.environ["DX_PROJECT_CONTEXT_ID"]
+    dxpy.config["DX_APISERVER_PROTOCOL"] = os.environ["DX_APISERVER_PROTOCOL"]
+    dxpy.config["DX_APISERVER_HOST"] = os.environ["DX_APISERVER_HOST"]
+    dxpy.config["DX_APISERVER_PORT"] = os.environ["DX_APISERVER_PORT"]
+    dxpy.set_security_context(json.loads(dxpy.config["DX_SECURITY_CONTEXT"]))
+
+    print(dxpy.config["DX_USERNAME"])
+    print(dxpy.config["DX_SECURITY_CONTEXT"])
+    print(dxpy.config["DX_WORKSPACE_ID"])
+    print(dxpy.config["DX_PROJECT_CONTEXT_ID"])
+    print(dxpy.config["DX_APISERVER_PROTOCOL"])
+    print(dxpy.config["DX_APISERVER_HOST"])
+    print(dxpy.config["DX_APISERVER_PORT"])
+
+    # TODO set DX_PROJECT_CONTEXT_ID as project_id input
+    # TODO set WORKSPACE_ID
+
+    # dxpy.set_workspace_id()
+
+    # Update PER_RUNTYPE_DOWNLOADS for TSO runs with Pan number regex
+    update_tso_config_regex(args["tso_pannumbers"])
 
     GenerateOutput(
         args["project_name"],
         args["project_id"],
-        args["auth_token"],
         args["email_user"],
         args["email_pw"],
     )

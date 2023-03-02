@@ -59,15 +59,15 @@ PER_RUNTYPE_DOWNLOADS = {
     "TSO500": {
         "gene_level_coverage": {
             "folder": "/coverage",
-            "regex": "\S+.gene_level.txt$",
+            "regex": "\S+(?:{}).gene_level.txt$",
         },
         "exon_level_coverage": {
             "folder": "/coverage",
-            "regex": "\S+.exon_level.txt$",
+            "regex": "\S+(?:{}).exon_level.txt$",
         },
         "results_zip": {
             "folder": "/",
-            "regex": "^Results.zip$",
+            "regex": "^(?:{})_Results.zip$",
         },
         "sompy": {
             "folder": "/QC",

@@ -19,7 +19,7 @@ push: build
 build: version
 	docker buildx build --platform linux/amd64 -t $(IMG_VERSIONED) . || docker build -t $(IMG_VERSIONED) .
 	docker tag $(IMG_VERSIONED) $(IMG_LATEST)
-	docker save $(IMG_VERSIONED) | gzip > $(DIR)/$(IMG_VERSIONED).tar.gz
+	# docker save $(IMG_VERSIONED) | gzip > $(DIR)/$(IMG_VERSIONED).tar.gz
 
 version:
 	echo $(BUILD) > VERSION

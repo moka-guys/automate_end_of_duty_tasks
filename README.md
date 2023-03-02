@@ -28,12 +28,14 @@ Required named arguments:
                         Username for mail server
   -PW EMAIL_PW, --email_pw EMAIL_PW
                         Password for mail server
+  -TP TSO_PANNUMBERS [TSO_PANNUMBERS ...], --tso_pannumbers TSO_PANNUMBERS [TSO_PANNUMBERS ...]
+                        Space separated pan numbers
 ```
 
 It can be run manually as follows:
 
 ```bash
-duty_csv.py [-h] -P PROJECT_NAME -I PROJECT_ID -A AUTH_TOKEN -EU EMAIL_USER -PW EMAIL_PW
+python3 duty_csv.py [-h] -P PROJECT_NAME -I PROJECT_ID -A AUTH_TOKEN -EU EMAIL_USER -PW EMAIL_PW
 ```
 
 ## Docker image
@@ -47,6 +49,7 @@ sudo make build
 The docker image can be run as follows:
 
 ```bash
+sudo docker run -v $PATH_TO_OUTPUTS:/outputs seglh-duty_csv:$TAG -P PROJECT_NAME -I PROJECT_ID -A AUTH_TOKEN -EU EMAIL_USER -PW EMAIL_PW -TP TSO_PANNUMBER TSO_PANNUMBER TSO_PANNUMBER
 ```
 
 The current and all previous versions of the tool are stored as dockerised versions in 001_ToolsReferenceData project as .tar.gz files.

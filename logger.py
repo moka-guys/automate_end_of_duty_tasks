@@ -54,16 +54,6 @@ class Logger(object):
         file_handler.setFormatter(self._formatter)
         return file_handler
 
-    def _get_syslog_handler(self):
-        """
-        Returns the SysLogHandler associated with the logging object
-            :return syslog_handler (obj):   SysLogHandler object
-        """
-        syslog_handler = logging.handlers.SysLogHandler(address="/dev/log")
-        syslog_handler.setLevel(logging.DEBUG)
-        syslog_handler.setFormatter(self._formatter)
-        return syslog_handler
-
     def _get_stream_handler(self):
         """
         Returns the StreamHandler associated with the logging object
@@ -85,6 +75,5 @@ class Logger(object):
         logger.filepath = filepath
         logger.setLevel(logging.DEBUG)
         logger.addHandler(self._get_file_handler(filepath))
-        logger.addHandler(self._get_syslog_handler())
         logger.addHandler(self._get_stream_handler())
         return logger
