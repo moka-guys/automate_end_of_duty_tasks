@@ -1,4 +1,4 @@
-BUILD := $(shell git describe --tags)
+BUILD := $(shell git describe --tags --always --dirty)
 DIR := $(shell pwd)
 
 # define image names
@@ -6,7 +6,7 @@ APP      := duty_csv
 REGISTRY := seglh
 
 # build tags
-IMG           := $(REGISTRY)-$(APP)
+IMG           := $(REGISTRY)/$(APP)
 IMG_VERSIONED := $(IMG):$(BUILD)
 IMG_LATEST    := $(IMG):latest
 
