@@ -15,3 +15,5 @@ test3.py
 
 LOG/*
 !LOG/.gitkeep
+
+VERSION
