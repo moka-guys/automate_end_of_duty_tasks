@@ -2,4 +2,3 @@ __pycache__
 *.log
 project*
 /venv
-VERSION

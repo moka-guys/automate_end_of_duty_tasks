@@ -21,8 +21,5 @@ build: version
 	docker tag $(IMG_VERSIONED) $(IMG_LATEST)
 	# docker save $(IMG_VERSIONED) | gzip > $(DIR)/$(IMG_VERSIONED).tar.gz
 
-version:
-	echo $(BUILD) > VERSION
-
 cleanbuild:
 	docker buildx build --platform linux/amd64 --no-cache -t $(IMG_VERSIONED) .
