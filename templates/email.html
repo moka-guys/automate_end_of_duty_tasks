@@ -316,9 +316,17 @@
   <body>
     <span class="preheader">This is preheader text. Some clients will show this text as a preview.</span>
     <div class="content">
+      {% if script_mode == 'TEST' %}
+      <p><b>TEST MODE. PLEASE DO NOT PROCESS THE RUN.</b></p>
+      {% endif %}
       <p>The following project requires processing:</p>
       <p><b>{{ project_name }} </b></p>
-      <p><b>{{ TSO_message }}</b></p>
+      <p>The project is a <b>{{ runtype }}</b> run.</p>
+      {% if runtype == 'TSO' %}
+      <p>WARNING! TSO500 Results files can take some time to download.</p>
+      {% endif %}
+      {% if number_of_files != 0 %}
+      <br>
       <p>Please carry out the following:</p>
       <p>
       <ol>
@@ -343,6 +351,9 @@
       </ol>
       </p>
       <p>A powershell profile for duty can be set up as per <a href="https://viapath.service-now.com/nav_to.do?uri=%2Fkb_view.do%3Fsys_kb_id%3Df076201c1b4cd5500dc321f6b04bcbc7">this KB article</a></p>
+      {% else %}
+      <p>There are no files to download for this run.</p>
+      {% endif %}
     </div>
     <br>
     <div class="additional">
@@ -353,7 +364,7 @@
           <td>{{ number_of_files }}</td>
         </tr>
         <tr>
-          <th>File types</th>
+          <th>DNAnexus files for download</th>
           <td>{{ files_by_filetype | safe }}</td>
         </tr>
         <tr>
