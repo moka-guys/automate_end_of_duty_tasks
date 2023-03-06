@@ -22,21 +22,31 @@ Required named arguments:
                         Name of project to obtain download links from
   -I PROJECT_ID, --project_id PROJECT_ID
                         ID of project to obtain download links from
-  -A AUTH_TOKEN, --auth_token AUTH_TOKEN
-                        DNAnexus authentication token
   -EU EMAIL_USER, --email_user EMAIL_USER
                         Username for mail server
   -PW EMAIL_PW, --email_pw EMAIL_PW
                         Password for mail server
   -TP TSO_PANNUMBERS [TSO_PANNUMBERS ...], --tso_pannumbers TSO_PANNUMBERS [TSO_PANNUMBERS ...]
                         Space separated pan numbers
+  -SP STG_PANNUMBERS [STG_PANNUMBERS ...], --stg_pannumbers STG_PANNUMBERS [STG_PANNUMBERS ...]
+                        Space separated pan numbers
+  -T TESTING, --testing TESTING
+                        Test mode, True or False
 ```
 
 It can be run manually as follows:
 
 ```bash
-python3 duty_csv.py [-h] -P PROJECT_NAME -I PROJECT_ID -A AUTH_TOKEN -EU EMAIL_USER -PW EMAIL_PW
+python3 duty_csv.py [-h] -P PROJECT_NAME -I PROJECT_ID -EU EMAIL_USER -PW EMAIL_PW -TP TSO_PANNUMBERS
+                   [TSO_PANNUMBERS ...] -SP STG_PANNUMBERS [STG_PANNUMBERS ...] -T TESTING
 ```
+
+## Outputs
+
+The script has 3 file outputs:
+* CSV file - contains information required by the [process_duty_csv](https://github.com/moka-guys/Automate_Duty_Process_CSV) script to download the required files output by the pipeline from DNAnexus to the required locations on the GSTT network
+* HTML file - this file is the HTMl that is used as the email message contents
+* Log file - contains all log messages from running the script
 
 ## Docker image
 

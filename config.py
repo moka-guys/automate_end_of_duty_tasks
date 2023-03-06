@@ -10,19 +10,21 @@ LOGGING_FORMATTER = "%(asctime)s - %(levelname)s - %(message)s"
 
 PROJECT_PATTERN = "(project-\S+)__\S+__"
 
-TSO_MESSAGE = "WARNING! TSO500 Results files can take some time to download"
-
 HOST = "email-smtp.eu-west-1.amazonaws.com"
 PORT = 587
 EMAIL_SENDER = "moka.alerts@gstt.nhs.uk"
 EMAIL_RECIPIENT = "gst-tr.mokaguys@nhs.net"
 SMTP_DO_TLS = True
 
+COLS = ["Name", "Folder", "Type", "Url", "GSTT_dir"]
+
 RUNTYPE_IDENTIFIERS = {
     "WES": ["WES"],
     "MokaPipe": ["NGS"],
     "SNP": ["SNP"],
     "TSO500": ["TSO"],
+    "ADX": ["ADX"],
+    "ONC": ["ONC"],
 }
 
 PER_RUNTYPE_DOWNLOADS = {
@@ -74,35 +76,112 @@ PER_RUNTYPE_DOWNLOADS = {
             "regex": "\S+_MergedSmallVariants.genome.vcf.stats.csv$",
         },
     },
-}
-
-
-TEST_ = {
-    "csv_dir": ,
-
-
-
+    "ADX": False,
+    "ONC": False,
 }
 
 # TODO incorporate these variables / logic into script
-P_BIOINF = "P:\Bioinformatics"
-P_BIOINF_TESTING = os.path.join(P_BIOINF, "testing\process_duty_csv")
+P_BIOINF_TESTING = "P:\Bioinformatics\\testing\process_duty_csv"
 
 GSTT_PATHS = {
     "TEST": {
-        "CSV": os.path.join(P_BIOINF_TESTING, "Duty_Bioinformatics_CSV"),
-        "WES": os.path.join(P_BIOINF_TESTING, "WES"),
-        "MokaPIPE": os.path.join(P_BIOINF_TESTING, "MokaPIPE"),
-        "SNP": os.path.join(P_BIOINF_TESTING, "SNP"),
-        "TSO500": os.path.join(P_BIOINF_TESTING, "TSO500"),
-        "StG": os.path.join(P_BIOINF_TESTING, "StG"),
+        "WES": {
+            "exon_level": {
+                "Via": f"{P_BIOINF_TESTING}\WES\genesummaries\\",
+                "StG": False,
+            }
+        },
+        "MokaPipe": {
+            "exon_level_coverage": {
+                "Via": f"{P_BIOINF_TESTING}\MokaPIPE\%s\coverage\\",
+                "StG": f"{P_BIOINF_TESTING}\StG\%s\coverage\\",
+            },
+            "rpkm": {
+                "Via": f"{P_BIOINF_TESTING}\MokaPIPE\%s\RPKM\\",
+                "StG": f"{P_BIOINF_TESTING}\StG\%s\RPKM\\",
+            },
+            "fh_prs": {
+                "Via": f"{P_BIOINF_TESTING}\MokaPIPE\%s\FH_PRS\\",
+                "StG": f"{P_BIOINF_TESTING}\StG\%s\FH_PRS\\",
+            },
+            "polyedge": {
+                "Via": f"{P_BIOINF_TESTING}\MokaPIPE\%s\polyedge\\",
+                "StG": f"{P_BIOINF_TESTING}\StG\%s\polyedge\\",
+            },
+        },
+        "SNP": {
+            "vcfs": {
+                "Via": f"{P_BIOINF_TESTING}\SNP\VCFs_Andrew\\",
+                "StG": False,
+            },
+        },
+        "TSO500": {
+            "gene_level_coverage": {
+                "Via": f"{P_BIOINF_TESTING}\TSO500\coverage\\",
+                "StG": False,
+            },
+            "exon_level_coverage": {
+                "Via": f"{P_BIOINF_TESTING}\TSO500\coverage\\",
+                "StG": False,
+            },
+            "results_zip": {
+                "Via": f"{P_BIOINF_TESTING}\TSO500\Results\\",
+                "StG": False,
+            },
+            "sompy": {
+                "Via": f"{P_BIOINF_TESTING}\TSO500\sompy\\",
+                "StG": False,
+            },
+        },
     },
     "PROD": {
-        "CSV": os.path.join(P_BIOINF, "Duty_Bioinformatics_CSV"),
-        "WES": "S:\Genetics\Bioinformatics\NGS\depthofcoverage\genesummaries",
-        "MokaPIPE": "P:\DNA LAB\Current\NGS worksheets\%s",
-        "SNP": os.path.join(P_BIOINF, "VCFs_Andrew"),
-        "TSO500": "S:\Genetics_Data2\TSO500",
-        "StG": "P:\DNA LAB\StG SFTP\StG SFTP outgoing",
+        "WES": {
+            "exon_level": {
+                "Via": "S:\Genetics\Bioinformatics\\NGS\depthofcoverage\genesummaries\\",
+                "StG": False,
+            },
+        },
+        "MokaPipe": {
+            "exon_level_coverage": {
+                "Via": "P:\DNA LAB\Current\\NGS worksheets\%s\coverage\\",
+                "StG": "P:\DNA LAB\StG SFTP\StG SFTP outgoing\%s\coverage\\",
+            },
+            "rpkm": {
+                "Via": "P:\DNA LAB\Current\\NGS worksheets\%s\RPKM\\",
+                "StG": "P:\DNA LAB\StG SFTP\StG SFTP outgoing\%s\RPKM\\",
+            },
+            "fh_prs": {
+                "Via": "P:\DNA LAB\Current\\NGS worksheets\%s\FH_PRS\\",
+                "StG": "P:\DNA LAB\StG SFTP\StG SFTP outgoing\%s\FH_PRS\\",
+            },
+            "polyedge": {
+                "Via": "P:\DNA LAB\Current\\NGS worksheets\%s\polyedge\\",
+                "StG": "P:\DNA LAB\StG SFTP\StG SFTP outgoing\%s\polyedge\\",
+            },
+        },
+        "SNP": {
+            "vcfs": {
+                "Via": "P:\Bioinformatics\VCFs_Andrew\\",
+                "StG": False,
+            },
+        },
+        "TSO500": {
+            "gene_level_coverage": {
+                "Via": "S:\Genetics_Data2\TSO500\coverage\\",
+                "StG": False,
+            },
+            "exon_level_coverage": {
+                "Via": "S:\Genetics_Data2\TSO500\coverage\\",
+                "StG": False,
+            },
+            "results_zip": {
+                "Via": "S:\Genetics_Data2\TSO500\Results\\",
+                "StG": False,
+            },
+            "sompy": {
+                "Via": "S:\Genetics_Data2\TSO500\sompy\\",
+                "StG": False,
+            },
+        },
     },
 }
