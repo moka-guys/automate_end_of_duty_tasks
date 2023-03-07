@@ -2,15 +2,7 @@
 
 The generates download links for a runfolder that are saved to a .csv file.
 
-The script supports runtypes that have downstream outputs requiring
-download onto the trust network as part of duty bioinformatician end of run processing tasks. These runtypes are as follows:
-
-* WES
-* TSO500
-* SNP
-* MokaPipe
-
-The script generates a CSV file containing urls for the files requiring download, and attaches this file to an email containing instructions on how to download the files to the appropriate locations on the GSTT network. This email is sent to the duty bioinformatician.
+The script supports all runtypes. For those runtypes that have downstream outputs requiring download onto the GSTT network, it will generate a CSV file containing URLs for the files requiring download, and attach the CSV file to an email containing instructions on how to download the files to the GSTT network. For those runtypes with no downstraem outputs, an email will still be sent but no CSV file will be attached. The email is sent to the bioinformatics shared inbox. Run types are defined in the configuration file.
 
 ## Running the script
 

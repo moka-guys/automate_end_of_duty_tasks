@@ -1,11 +1,11 @@
 BUILD := $(shell git describe --tags --always --dirty)
 DIR := $(shell pwd)
 
-# define image names
+# Define image names
 APP      := duty_csv
 REGISTRY := seglh
 
-# build tags
+# Build tags
 IMG           := $(REGISTRY)/$(APP)
 IMG_VERSIONED := $(IMG):$(BUILD)
 IMG_LATEST    := $(IMG):latest
@@ -19,7 +19,7 @@ push: build
 build: version
 	docker buildx build --platform linux/amd64 -t $(IMG_VERSIONED) . || docker build -t $(IMG_VERSIONED) .
 	docker tag $(IMG_VERSIONED) $(IMG_LATEST)
-	# docker save $(IMG_VERSIONED) | gzip > $(DIR)/$(IMG_VERSIONED).tar.gz
+	docker save $(IMG_VERSIONED) | gzip > $(DIR)/$(REGISTRY)-$(APP):$(BUILD).tar.gz
 
 cleanbuild:
 	docker buildx build --platform linux/amd64 --no-cache -t $(IMG_VERSIONED) .

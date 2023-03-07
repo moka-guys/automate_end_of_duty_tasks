@@ -1,4 +1,4 @@
-argcomplete==1.12.3
+argcomplete==2.0.0
 certifi==2022.12.7
 cffi==1.15.1
 charset-normalizer==2.0.12
