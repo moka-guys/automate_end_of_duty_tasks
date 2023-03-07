@@ -18,18 +18,22 @@ EMAIL_SUBJECT = {
 HOST = "email-smtp.eu-west-1.amazonaws.com"
 PORT = 587
 EMAIL_SENDER = "moka.alerts@gstt.nhs.uk"
-EMAIL_RECIPIENT = "gst-tr.mokaguys@nhs.net"
+EMAIL_RECIPIENT = {
+    "TEST": "mokaguys@gmail.com",
+    "PROD": "gst-tr.mokaguys@nhs.net",
+}
 SMTP_DO_TLS = True
 
 COLS = ["Name", "Folder", "Type", "Url", "GSTT_dir"]
 
 RUNTYPE_IDENTIFIERS = {
-    "WES": ["WES"],
-    "MokaPipe": ["NGS"],
-    "SNP": ["SNP"],
-    "TSO500": ["TSO"],
-    "ADX": ["ADX"],
-    "ONC": ["ONC"],
+    "WES": {"present": ["WES", "NGS"], "absent": []},
+    "MokaPipe": {"present": ["NGS"], "absent": ["WES"]},
+    "LRPCR": {"present": ["LRPCR"], "absent": []},
+    "SNP": {"present": ["SNP"], "absent": []},
+    "TSO500": {"present": ["TSO"], "absent": []},
+    "ArcherDX": {"present": ["ADX"], "absent": []},
+    "SWIFT": {"present": ["ONC"], "absent": []},
 }
 
 PER_RUNTYPE_DOWNLOADS = {
@@ -39,24 +43,27 @@ PER_RUNTYPE_DOWNLOADS = {
             "regex": r"\S+.chanjo_txt$",
         }
     },
-    "MokaPipe": {
-        "exon_level_coverage": {
-            "folder": "/coverage",
-            "regex": r"\S+.exon_level.txt$",
+    **dict.fromkeys(
+        ["MokaPipe", "LRPCR"],
+        {
+            "exon_level_coverage": {
+                "folder": "/coverage",
+                "regex": r"\S+.exon_level.txt$",
+            },
+            "rpkm": {
+                "folder": "/conifer_output",
+                "regex": r"combined_bed_summary\S+",
+            },
+            "fh_prs": {
+                "folder": "/PRS_output",
+                "regex": r"\S+.txt$",
+            },
+            "polyedge": {
+                "folder": "/polyedge",
+                "regex": r"\S+_polyedge.pdf$",
+            },
         },
-        "rpkm": {
-            "folder": "/conifer_output",
-            "regex": r"combined_bed_summary\S+",
-        },
-        "fh_prs": {
-            "folder": "/PRS_output",
-            "regex": r"\S+.txt$",
-        },
-        "polyedge": {
-            "folder": "/polyedge",
-            "regex": r"\S+_polyedge.pdf$",
-        },
-    },
+    ),
     "SNP": {
         "vcfs": {
             "folder": "/output",
@@ -81,8 +88,7 @@ PER_RUNTYPE_DOWNLOADS = {
             "regex": r"\S+_MergedSmallVariants.genome.vcf.stats.csv$",
         },
     },
-    "ADX": False,
-    "ONC": False,
+    **dict.fromkeys(["ArcherDX", "SWIFT"], False),
 }
 
 P_BIOINF_TESTING = "P:\\Bioinformatics\\testing\\process_duty_csv"
@@ -95,24 +101,27 @@ GSTT_PATHS = {
                 "StG": False,
             }
         },
-        "MokaPipe": {
-            "exon_level_coverage": {
-                "Via": f"{P_BIOINF_TESTING}\\MokaPIPE\\%s\\coverage\\",
-                "StG": f"{P_BIOINF_TESTING}\\StG\\%s\\coverage\\",
+        **dict.fromkeys(
+            ["MokaPipe", "LRPCR"],
+            {
+                "exon_level_coverage": {
+                    "Via": f"{P_BIOINF_TESTING}\\MokaPIPE\\%s\\coverage\\",
+                    "StG": f"{P_BIOINF_TESTING}\\StG\\%s\\coverage\\",
+                },
+                "rpkm": {
+                    "Via": f"{P_BIOINF_TESTING}\\MokaPIPE\\%s\\RPKM\\",
+                    "StG": f"{P_BIOINF_TESTING}\\StG\\%s\\RPKM\\",
+                },
+                "fh_prs": {
+                    "Via": f"{P_BIOINF_TESTING}\\MokaPIPE\\%s\\FH_PRS\\",
+                    "StG": f"{P_BIOINF_TESTING}\\StG\\%s\\FH_PRS\\",
+                },
+                "polyedge": {
+                    "Via": f"{P_BIOINF_TESTING}\\MokaPIPE\\%s\\polyedge\\",
+                    "StG": f"{P_BIOINF_TESTING}\\StG\\%s\\polyedge\\",
+                },
             },
-            "rpkm": {
-                "Via": f"{P_BIOINF_TESTING}\\MokaPIPE\\%s\\RPKM\\",
-                "StG": f"{P_BIOINF_TESTING}\\StG\\%s\\RPKM\\",
-            },
-            "fh_prs": {
-                "Via": f"{P_BIOINF_TESTING}\\MokaPIPE\\%s\\FH_PRS\\",
-                "StG": f"{P_BIOINF_TESTING}\\StG\\%s\\FH_PRS\\",
-            },
-            "polyedge": {
-                "Via": f"{P_BIOINF_TESTING}\\MokaPIPE\\%s\\polyedge\\",
-                "StG": f"{P_BIOINF_TESTING}\\StG\\%s\\polyedge\\",
-            },
-        },
+        ),
         "SNP": {
             "vcfs": {
                 "Via": f"{P_BIOINF_TESTING}\\SNP\\VCFs_Andrew\\",
@@ -137,6 +146,7 @@ GSTT_PATHS = {
                 "StG": False,
             },
         },
+        **dict.fromkeys(["ArcherDX", "ONC"], False),
     },
     "PROD": {
         "WES": {
@@ -145,24 +155,27 @@ GSTT_PATHS = {
                 "StG": False,
             },
         },
-        "MokaPipe": {
-            "exon_level_coverage": {
-                "Via": "P:\\DNA LAB\\Current\\NGS worksheets\\%s\\coverage\\",
-                "StG": "P:\\DNA LAB\\StG SFTP\\StG SFTP outgoing\\%s\\coverage\\",
+        **dict.fromkeys(
+            ["MokaPipe", "LRPCR"],
+            {
+                "exon_level_coverage": {
+                    "Via": "P:\\DNA LAB\\Current\\NGS worksheets\\%s\\coverage\\",
+                    "StG": "P:\\DNA LAB\\StG SFTP\\StG SFTP outgoing\\%s\\coverage\\",
+                },
+                "rpkm": {
+                    "Via": "P:\\DNA LAB\\Current\\NGS worksheets\\%s\\RPKM\\",
+                    "StG": "P:\\DNA LAB\\StG SFTP\\StG SFTP outgoing\\%s\\RPKM\\",
+                },
+                "fh_prs": {
+                    "Via": "P:\\DNA LAB\\Current\\NGS worksheets\\%s\\FH_PRS\\",
+                    "StG": "P:\\DNA LAB\\StG SFTP\\StG SFTP outgoing\\%s\\FH_PRS\\",
+                },
+                "polyedge": {
+                    "Via": "P:\\DNA LAB\\Current\\NGS worksheets\\%s\\polyedge\\",
+                    "StG": "P:\\DNA LAB\\StG SFTP\\StG SFTP outgoing\\%s\\polyedge\\",
+                },
             },
-            "rpkm": {
-                "Via": "P:\\DNA LAB\\Current\\NGS worksheets\\%s\\RPKM\\",
-                "StG": "P:\\DNA LAB\\StG SFTP\\StG SFTP outgoing\\%s\\RPKM\\",
-            },
-            "fh_prs": {
-                "Via": "P:\\DNA LAB\\Current\\NGS worksheets\\%s\\FH_PRS\\",
-                "StG": "P:\\DNA LAB\\StG SFTP\\StG SFTP outgoing\\%s\\FH_PRS\\",
-            },
-            "polyedge": {
-                "Via": "P:\\DNA LAB\\Current\\NGS worksheets\\%s\\polyedge\\",
-                "StG": "P:\\DNA LAB\\StG SFTP\\StG SFTP outgoing\\%s\\polyedge\\",
-            },
-        },
+        ),
         "SNP": {
             "vcfs": {
                 "Via": "P:\\Bioinformatics\\VCFs_Andrew\\",
@@ -187,5 +200,6 @@ GSTT_PATHS = {
                 "StG": False,
             },
         },
+        **dict.fromkeys(["ArcherDX", "SWIFT"], False),
     },
 }

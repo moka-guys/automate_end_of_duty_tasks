@@ -322,10 +322,10 @@
       <p>The following project requires processing:</p>
       <p><b>{{ project_name }} </b></p>
       <p>The project is a <b>{{ runtype }}</b> run.</p>
-      {% if runtype == 'TSO' %}
-      <p>WARNING! TSO500 Results files can take some time to download.</p>
+      {% if runtype == 'TSO500' %}
+      <p><b><i>WARNING! TSO500 Results files can take some time to download.</i></b></p>
       {% endif %}
-      {% if number_of_files != 0 %}
+      {% if number_of_files != None %}
       <br>
       <p>Please carry out the following:</p>
       <p>

@@ -82,11 +82,7 @@ class GenerateOutput:
         self.project_name = project_name
         self.project_id = project_id
         self.runtype = self.get_runtype()
-        logger.info(
-            "Project %s is a %s runfolder",
-            self.project_name,
-            self.runtype,
-        )
+        self.email_recipient = config.EMAIL_RECIPIENT[self.script_mode]
         self.project_jobs = self.get_jobs()
         self.csvfile_name = (
             f"{self.project_id}.{self.runtype}."
@@ -107,34 +103,18 @@ class GenerateOutput:
             autoescape=True,
         ).get_template(config.EMAIL_TEMPLATE)
 
-        if self.runtype:
-            self.file_dict = config.PER_RUNTYPE_DOWNLOADS[self.runtype]
-            self.email_subject = config.EMAIL_SUBJECT[self.script_mode].format(
-                self.runtype, self.project_name
-            )
-            # If the runfolder has files that need download
-            if self.file_dict:
-                logger.info("The run has files requiring download")
-                self.data_obj_dict, self.data_num_dict = self.get_data_dicts()
-                self.url_dataframe = self.get_url_dataframe()
-                self.csv_contents = self.create_csv()
-                self.filetype_html = self.get_filetype_html()
-                self.number_of_files = self.get_number_of_files()
-            else:
-                logger.info("The run has no files requiring download")
-                (
-                    self.data_obj_dict,
-                    self.data_num_dict,
-                    self.url_dataframe,
-                    self.csv_contents,
-                    self.filetype_html,
-                    self.number_of_files,
-                ) = (False, False, False, False, None, 0)
-            self.html = self.generate_html()
-            self.email_msg = self.get_message_obj()
-            self.send_email()
-        else:
-            logger.error("Script halted due to absence of runtype")
+        self.email_subject = config.EMAIL_SUBJECT[self.script_mode].format(
+            self.runtype, self.project_name
+        )
+        self.file_dict = config.PER_RUNTYPE_DOWNLOADS[self.runtype]
+        self.data_obj_dict, self.data_num_dict = self.get_data_dicts()
+        self.url_dataframe = self.get_url_dataframe()
+        self.csv_contents = self.create_csv()
+        self.filetype_html = self.get_filetype_html()
+        self.number_of_files = self.get_number_of_files()
+        self.html = self.generate_html()
+        self.email_msg = self.get_message_obj()
+        self.send_email()
         logger.info("Script completed")
 
     def get_runtype(self):
@@ -143,16 +123,27 @@ class GenerateOutput:
             :return runtype (str, None):    Runtype string, or none if
                                             cannot be parsed
         """
+        project_runtype = None
         for runtype in config.RUNTYPE_IDENTIFIERS:
             if all(
-                runtype in self.project_name
-                for runtype in config.RUNTYPE_IDENTIFIERS[runtype]
+                identifier in self.project_name
+                for identifier in config.RUNTYPE_IDENTIFIERS[runtype][
+                    "present"
+                ]
+            ) and all(
+                identifier not in self.project_name
+                for identifier in config.RUNTYPE_IDENTIFIERS[runtype]["absent"]
             ):
-                logger.info("This run is a %s run", runtype)
-                return runtype
-            else:
-                logger.error("Unable to determine runtype for this run")
-                return None
+                project_runtype = runtype
+        if project_runtype:
+            logger.info("This run is a %s run", project_runtype)
+            return project_runtype
+        else:
+            logger.error(
+                "Runtype in runfolder name does not "
+                "match config-defined runtypes"
+            )
+            sys.exit(1)
 
     def get_jobs(self):
         """
@@ -169,106 +160,144 @@ class GenerateOutput:
             for job in project_jobs:
                 state = job.get("describe").get("state")
                 states.append(state)
-            logger.info("Jobs were identified in the DNAnexus project")
+            logger.info(
+                "%s jobs were identified in the DNAnexus project",
+                len(project_jobs),
+            )
+            return project_jobs
         except Exception as exception:
             logger.error(
-                "There was a problem identifying jobs in the DNAnexus project"
+                "There was a problem identifying jobs "
+                "in the DNAnexus project: %s",
+                exception,
             )
-        return project_jobs
+            sys.exit(1)
 
     def get_data_dicts(self):
         """
         Search DNAnexus to find file data objects based on
-        config-defined regexp patterns
+        config-defined regexp patterns. N.B. find_data_objects finds files
+        both at the defined folder level and within any subdirectories
             :return data_obj_dict:  Dictionary of data objects for use in
                                     downloading files
             :return data_num_dict:  Dictionary of number of data objects per
                                     file type
         """
-        data_obj_dict = {}
-        data_num_dict = {}
-        logger.info(
-            "Searching for data objects in DNAnexus project "
-            "using regular expressions"
-        )
-        for filetype in self.file_dict:
-            data_obj_dict[filetype] = list(
-                dxpy.bindings.search.find_data_objects(
-                    project=self.project_id,
-                    name=self.file_dict[filetype]["regex"],
-                    name_mode="regexp",
-                    describe=True,
-                    folder=self.file_dict[filetype]["folder"],
-                )
+        if self.file_dict:
+            logger.info(
+                "The config defines that this run should "
+                "have files for download"
             )
-            try:
-                data_num = len(data_obj_dict[filetype])
-                logger.info(
-                    "The number of items for %s is %s", filetype, data_num
+            data_obj_dict = {}
+            data_num_dict = {}
+            logger.info(
+                "Searching for data objects in DNAnexus project "
+                "using regular expressions"
+            )
+            for filetype in self.file_dict:
+                data_obj_dict[filetype] = list(
+                    dxpy.bindings.search.find_data_objects(
+                        project=self.project_id,
+                        name=self.file_dict[filetype]["regex"],
+                        name_mode="regexp",
+                        describe=True,
+                        folder=self.file_dict[filetype]["folder"],
+                    )
                 )
-                data_num_dict[filetype] = data_num
-            except Exception:
-                logger.error(
-                    "No data requiring download was found for "
-                    "the following file type: %s"
-                )
-        return data_obj_dict, data_num_dict
+                try:
+                    data_num = len(data_obj_dict[filetype])
+                    logger.info(
+                        "The number of items for %s is %s", filetype, data_num
+                    )
+                    data_num_dict[filetype] = data_num
+                except Exception:
+                    logger.error(
+                        "No data requiring download was found for "
+                        "the following file type: %s"
+                    )
+                    sys.exit(1)
+            return data_obj_dict, data_num_dict
+        else:
+            logger.info(
+                "No DNAnexus data objects dictionary was created as the "
+                "config defines that this run will not have files for download"
+            )
+            return None, None
 
     def get_url_dataframe(self):
         """
         Generate URL links from a list of data and produce a pandas dataframe
-            :return dataframe (tabular): Pandas dataframe containing URL links
+            :return dataframe, None (tabular, bool): Pandas dataframe
+                                                     containing URL links, or
+                                                     None if runtype has no
+                                                     files for download
         """
-        data = []
-        logger.info(
-            "Creating urls dataframe for %s project: %s",
-            self.runtype,
-            self.project_name,
-        )
-        for filetype in self.data_obj_dict:
-            for data_obj in self.data_obj_dict[filetype]:
-                file_name = data_obj.get("describe").get("name")
-                file_id = data_obj.get("id")
-                url = self.get_url(file_id, self.project_id, file_name)
-                gstt_dir = [
-                    config.GSTT_PATHS[self.script_mode][self.runtype][
-                        filetype
-                    ]["Via"]
-                ]
-                if any(pannumber in url for pannumber in self.stg_pannumbers):
-                    gstt_dir.append(
-                        config.GSTT_PATHS[self.script_mode][self.runtype][
-                            filetype
-                        ]["StG"]
-                    )
+        if self.data_obj_dict:
+            data = []
+            logger.info(
+                "Creating urls dataframe for %s project: %s",
+                self.runtype,
+                self.project_name,
+            )
+            try:
+                for filetype in self.data_obj_dict:
+                    for data_obj in self.data_obj_dict[filetype]:
+                        file_name = data_obj.get("describe").get("name")
+                        file_id = data_obj.get("id")
+                        url = self.get_url(file_id, self.project_id, file_name)
+                        gstt_dir = [
+                            config.GSTT_PATHS[self.script_mode][self.runtype][
+                                filetype
+                            ]["Via"]
+                        ]
+                        if any(
+                            pannumber in url
+                            for pannumber in self.stg_pannumbers
+                        ):
+                            gstt_dir.append(
+                                config.GSTT_PATHS[self.script_mode][
+                                    self.runtype
+                                ][filetype]["StG"]
+                            )
 
-                merged_data = [
-                    file_name,
-                    data_obj.get("describe").get("folder"),
-                    filetype,
-                    url,
-                    gstt_dir,
-                ]
-                data.append(merged_data)
+                        merged_data = [
+                            file_name,
+                            data_obj.get("describe").get("folder"),
+                            filetype,
+                            url,
+                            gstt_dir,
+                        ]
+                        data.append(merged_data)
 
-        dataframe = pd.DataFrame(
-            data,
-            columns=config.COLS,
-        )
-        dataframe.sort_values(
-            by=["Type", "Name"],
-            inplace=True,
-            ascending=True,
-            ignore_index=True,
-        )  # Sort values by sample name
-        dataframe.index += 1  # Start sample numbering from 1
-        logger.info(
-            "Created urls dataframe for %s project: %s",
-            self.runtype,
-            self.project_name,
-        )
-
-        return dataframe
+                dataframe = pd.DataFrame(
+                    data,
+                    columns=config.COLS,
+                )
+                dataframe.sort_values(
+                    by=["Type", "Name"],
+                    inplace=True,
+                    ascending=True,
+                    ignore_index=True,
+                )  # Sort values by sample name
+                dataframe.index += 1  # Start sample numbering from 1
+                logger.info(
+                    "Created urls dataframe for %s project: %s",
+                    self.runtype,
+                    self.project_name,
+                )
+            except Exception as exception:
+                logger.error(
+                    "An error was encountered when creating the urls "
+                    "dataframe: %s",
+                    exception,
+                )
+                sys.exit(1)
+            return dataframe
+        else:
+            logger.info(
+                "No URLs dataframe was created as there is no DNAnexus data "
+                "objects dictionary"
+            )
 
     def get_url(self, file_id, project_id, file_name):
         """
@@ -293,6 +322,7 @@ class GenerateOutput:
                 dxfile,
                 exception,
             )
+            sys.exit(1)
         return url
 
     def create_csv(self):
@@ -300,43 +330,62 @@ class GenerateOutput:
         Write URLs to CSV, and return CSV format as string
             :return csv_contents (str): Return resulting CSV format as string
         """
-        logger.info(
-            "Creating csv file for %s project: %s",
-            self.runtype,
-            self.project_name,
-        )
-        # Write to file
-        self.url_dataframe.to_csv(self.csvfile_path, index=False)
-        # Save as variable
-        csv_contents = self.url_dataframe.to_csv(index=False)
+        if self.url_dataframe is not None:
+            logger.info(
+                "Creating csv file for %s project: %s",
+                self.runtype,
+                self.project_name,
+            )
+            try:
+                # Write to file
+                self.url_dataframe.to_csv(self.csvfile_path, index=False)
+                # Save as variable
+                csv_contents = self.url_dataframe.to_csv(index=False)
+                logger.info("CSV file has been created: %s", self.csvfile_path)
+                return csv_contents
 
-        logger.info("CSV file has been created: %s", self.csvfile_path)
-        return csv_contents
+            except Exception as exception:
+                logger.error(
+                    "An error was encountered when writing the urls "
+                    "dataframe to CSV: %s",
+                    exception,
+                )
+                sys.exit(1)
+        else:
+            logger.info("No CSV file was created as no URL dataframe exists")
 
     def get_filetype_html(self):
         """
         Generate HTML for files by filetype
             :return filetype_html (str):    Html string
         """
-        filetype_html = ""
-        try:
-            for filetype in self.data_num_dict:
-                filetype_html += (
-                    f"{self.data_num_dict[filetype]} " f"{filetype} files<br>"
+        if self.data_num_dict:
+            filetype_html = ""
+            try:
+                for filetype in self.data_num_dict:
+                    filetype_html += (
+                        f"{self.data_num_dict[filetype]} "
+                        f"{filetype} files<br>"
+                    )
+                logger.info("Filetype HTML successfully generated")
+                return filetype_html
+            except Exception as exception:
+                logger.error(
+                    "There was an exception when generating the "
+                    "filetype html: %s",
+                    exception,
                 )
-            logger.info("Filetype HTML successfully generated")
-        except Exception as exception:
-            logger.error(
-                "There was an exception when generating the filetype html: %s",
-                exception,
+                sys.exit(1)
+        else:
+            logger.info(
+                "Filetype HTML was not generated for this project as "
+                "there are no DNAnexus data objects marked for download"
             )
-        return filetype_html
 
     def get_number_of_files(self):
         """
         Calculate number of files to download for project
             :return number_of_files (int):      Number of files
-
         """
         if self.data_num_dict:
             number_of_files = sum(self.data_num_dict.values())
@@ -344,8 +393,20 @@ class GenerateOutput:
                 "%s files were identified for download for this project",
                 number_of_files,
             )
-        logger.error("No files were identified for download for this project")
-        return number_of_files
+            # If there are no files and files were expected from this runtype
+            if number_of_files == 0 and self.file_dict:
+                logger.error(
+                    "Files were expected to be identified for download for "
+                    "this project but none were found"
+                )
+                sys.exit(1)
+            else:
+                return number_of_files
+        else:
+            logger.info(
+                "Files could not be counted as there are no DNAnexus data "
+                "objects marked for download"
+            )
 
     def generate_html(self):
         """
@@ -373,7 +434,7 @@ class GenerateOutput:
                 "the following exception: %s",
                 exception,
             )
-
+            sys.exit(1)
         return html
 
     def get_message_obj(self):
@@ -387,7 +448,7 @@ class GenerateOutput:
         msg["X-MSMail-Priority"] = "High"
         msg["Subject"] = self.email_subject
         msg["From"] = config.EMAIL_SENDER
-        msg["To"] = config.EMAIL_RECIPIENT
+        msg["To"] = self.email_recipient
         msg.attach(MIMEText(self.html, "html"))
 
         if self.csv_contents:
@@ -419,12 +480,12 @@ class GenerateOutput:
             server.login(self.email_user, self.email_pw)
             server.sendmail(
                 config.EMAIL_SENDER,
-                config.EMAIL_RECIPIENT,
+                self.email_recipient,
                 self.email_msg.as_string(),
             )
             logger.info(
                 "CSV file has been emailed to %s",
-                config.EMAIL_RECIPIENT,
+                self.email_recipient,
             )
         except Exception as exception:
             logger.error(
@@ -432,6 +493,7 @@ class GenerateOutput:
                 "the following exception: %s",
                 exception,
             )
+            sys.exit(1)
 
 
 def arg_parse():
@@ -527,6 +589,7 @@ def update_tso_config_regex(tso_pannumbers):
             "TSO500 regex: %s",
             exception,
         )
+        sys.exit(1)
 
 
 def git_tag():
@@ -585,7 +648,7 @@ if __name__ == "__main__":
     else:
         SCRIPT_MODE = "PROD"
 
-    logger.info("Script is being run in  %s mode", SCRIPT_MODE)
+    logger.info("Script is being run in %s mode", SCRIPT_MODE)
 
     GenerateOutput(
         args["project_name"],

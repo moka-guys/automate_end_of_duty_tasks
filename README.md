@@ -26,7 +26,13 @@ Required named arguments:
                         Test mode, True or False
 ```
 
-It can be run manually as follows:
+Before running the script, the DX_API_TOKEN environment variable must be set and exported, where DNANEXUS_AUTH_TOKEN is the DNAnexus authentication token:
+
+```bash
+export DX_API_TOKEN=$DNANEXUS_AUTH_TOKEN
+```
+
+The script can then be run as follows:
 
 ```bash
 python3 duty_csv.py [-h] -P PROJECT_NAME -I PROJECT_ID -EU EMAIL_USER -PW EMAIL_PW -TP TSO_PANNUMBERS
@@ -48,10 +54,10 @@ The docker image is built, tagged and saved as a .tar.gz file using the Makefile
 sudo make build
 ```
 
-The docker image can be run as follows:
+The docker image can be run as follows, making sure to suppy the DNAnexus authentication token as an environment variable:
 
 ```bash
-sudo docker run -v $PATH_TO_OUTPUTS:/outputs seglh-duty_csv:$TAG -P PROJECT_NAME -I PROJECT_ID -A AUTH_TOKEN -EU EMAIL_USER -PW EMAIL_PW -TP TSO_PANNUMBER TSO_PANNUMBER TSO_PANNUMBER
+sudo docker run -e DX_API_TOKEN=$DNANEXUS_AUTH_TOKEN -v $PATH_TO_OUTPUTS:/outputs seglh/duty_csv:$TAG -P PROJECT_NAME -I PROJECT_ID -EU EMAIL_USER -PW EMAIL_PW -TP TSO_PANNUMBER TSO_PANNUMBER TSO_PANNUMBER
 ```
 
 The current and all previous versions of the tool are stored as dockerised versions in 001_ToolsReferenceData project as .tar.gz files.
