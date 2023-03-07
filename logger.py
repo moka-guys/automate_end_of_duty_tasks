@@ -9,15 +9,14 @@ import config
 
 
 class Logger(object):
-    """Simple logging class
+    """
+    Simple logging class
 
     shutdown_logs()
         To prevent duplicate filehandlers and system handlers close and
         remove all handlers for all log files that have a python logging object
     _get_file_handler()
         Returns the FileHandler associated with the logging object
-    _get_syslog_handler()
-        Returns the SysLogHandler associated with the logging object
     _get_stream_handler()
         Returns the StreamHandler associated with the logging object
     get_logger()
@@ -31,7 +30,7 @@ class Logger(object):
     def __init__(self, logfile_path):
         """
         Constructor for the Logger class
-            :param logfile_path(str): Logfile path
+            :param logfile_path (str): Logfile path
         """
         self.logger = self.get_logger("logger", logfile_path)
 
@@ -67,8 +66,8 @@ class Logger(object):
     def get_logger(self, name, filepath):
         """
         Return a Python logging object
-            :param name(str):       Logger name
-            :param filepath(str):   Logfile path
+            :param name (str):       Logger name
+            :param filepath (str):   Logfile path
             :return logger (obj):   Python logging object
         """
         logger = logging.getLogger(name)
