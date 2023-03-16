@@ -2,7 +2,7 @@
 """duty_csv.py
 
 Generate DNAnexus download links for end of run processing file downloads for
-run types that require file downloads, and save to a .csv file.
+run types that require file downloads, and save to a .csv file
 """
 import sys
 import os
@@ -26,7 +26,8 @@ class GenerateOutput:
     that need to be placed on the trust shared drives
 
     CSV file is then sent over email to the config-specified recipient, if
-    that runfolder has files requiring download
+    that runfolder has files requiring download. The HTML file used as the
+    email message is output
 
     A log file is created with information about the processing steps
 
@@ -38,18 +39,28 @@ class GenerateOutput:
         get_data_dicts()
             Search DNAnexus to find file data objects based on
             config-defined regexp patterns
-        get_url_dataframe()
+        create_url_dataframe()
             Generate URL links from a list of data and
             produce a pandas dataframe
+        get_url_attrs()
+            Return list of lists, each list containing the items that populate
+            the rows of the CSV file
+        get_trust_dirs()
+            Return list of trust directories that the file requires download
+            to. If file name contains StG pan number, only download to the
+            config-specified StG dir. If file name contains custom panels
+            capture pan number, download to both StG and Synnovis config-
+            specified dirs. Otherwise, only download to the config-specified
+            Synnovis dir.
         get_url()
             Create a url for a file in DNAnexus
         create_csv()
-            Write URLs to CSV, and return CSV format as string
+            Write dataframe to CSV, and return CSV format as string
         get_filetype_html()
             Generate HTML for files by filetype
         get_number_of_files()
             Calculate number of files to download for project
-        generate_html()
+        generate_email_html()
             Generate HTML
         get_message_obj()
             Create message object
@@ -59,25 +70,29 @@ class GenerateOutput:
 
     def __init__(
         self,
-        project_name,
-        project_id,
-        email_user,
-        email_pw,
-        stg_pannumbers,
-        mode,
+        project_name: str,
+        project_id: str,
+        email_user: str,
+        email_pw: str,
+        stg_pannumbers: list,
+        cp_capture_pannos: list,
+        mode: str,
     ):
         """
         Constructor for the GenerateOutput class
-            :param project_name (str):      DNAnexus project name
-            :param project_id (str):        DNAnexus project ID
-            :param email_user (str):        Mail server username
-            :param email_pw (str):          Mail server password
-            :param stg_pannumbers (list):   List of St George's pan numbers
-            :mode (str):                    Script mode ("TEST" or "PROD")
+            :param project_name (str):          DNAnexus project name
+            :param project_id (str):            DNAnexus project ID
+            :param email_user (str):            Mail server username
+            :param email_pw (str):              Mail server password
+            :param stg_pannumbers (list):       List of St George's pan numbers
+            :param cp_capture_pannos (list):    Custom panels whole capture
+                                                pan numbers
+            :mode (str):                        Script mode ("TEST" or "PROD")
         """
         self.email_user = email_user
         self.email_pw = email_pw
         self.stg_pannumbers = stg_pannumbers
+        self.cp_capture_pannos = cp_capture_pannos
         self.script_mode = mode
         self.project_name = project_name
         self.project_id = project_id
@@ -85,19 +100,15 @@ class GenerateOutput:
         self.email_recipient = config.EMAIL_RECIPIENT[self.script_mode]
         self.project_jobs = self.get_jobs()
         self.csvfile_name = (
-            f"{self.project_id}.{self.runtype}."
-            f"{self.project_name}.duty_csv.csv"
+            f"{self.project_name}.{self.project_id}.{self.runtype}"
+            f".duty_csv.csv"
         )
         self.htmlfile_name = (
-            f"{self.project_id}.{self.runtype}."
-            f"{self.project_name}.duty_csv.html"
+            f"{self.project_name}.{self.project_id}.{self.runtype}"
+            f".duty_csv.html"
         )
-        self.csvfile_path = os.path.join(
-            config.DOCUMENT_ROOT, self.csvfile_name
-        )
-        self.htmlfile_path = os.path.join(
-            config.DOCUMENT_ROOT, self.htmlfile_name
-        )
+        self.csvfile_path = os.path.join(os.getcwd(), self.csvfile_name)
+        self.htmlfile_path = os.path.join(os.getcwd(), self.htmlfile_name)
         self.template = jinja2.Environment(
             loader=jinja2.FileSystemLoader(config.TEMPLATE_DIR),
             autoescape=True,
@@ -108,16 +119,16 @@ class GenerateOutput:
         )
         self.file_dict = config.PER_RUNTYPE_DOWNLOADS[self.runtype]
         self.data_obj_dict, self.data_num_dict = self.get_data_dicts()
-        self.url_dataframe = self.get_url_dataframe()
+        self.url_dataframe = self.create_url_dataframe()
         self.csv_contents = self.create_csv()
         self.filetype_html = self.get_filetype_html()
         self.number_of_files = self.get_number_of_files()
-        self.html = self.generate_html()
+        self.html = self.generate_email_html()
         self.email_msg = self.get_message_obj()
         self.send_email()
         logger.info("Script completed")
 
-    def get_runtype(self):
+    def get_runtype(self) -> str | None:
         """
         String comparison with config variables to detetrmine runtype
             :return runtype (str, None):    Runtype string, or none if
@@ -145,10 +156,10 @@ class GenerateOutput:
             )
             sys.exit(1)
 
-    def get_jobs(self):
+    def get_jobs(self) -> list:
         """
         Find all executions/jobs for a given project
-            :return project_jobs (list):    List of jobs within project
+            :return project_jobs (list): List of job ID strings within project
         """
         try:
             project_jobs = list(
@@ -173,15 +184,15 @@ class GenerateOutput:
             )
             sys.exit(1)
 
-    def get_data_dicts(self):
+    def get_data_dicts(self) -> tuple[dict, dict] | tuple[None, None]:
         """
         Search DNAnexus to find file data objects based on
         config-defined regexp patterns. N.B. find_data_objects finds files
         both at the defined folder level and within any subdirectories
-            :return data_obj_dict:  Dictionary of data objects for use in
-                                    downloading files
-            :return data_num_dict:  Dictionary of number of data objects per
-                                    file type
+            :return data_obj_dict(dict) | None: Dictionary of data objects for
+                                                use in downloading files
+            :return data_num_dict(dict) | None: Dictionary of number of data
+                                                object per file type
         """
         if self.file_dict:
             logger.info(
@@ -224,67 +235,42 @@ class GenerateOutput:
             )
             return None, None
 
-    def get_url_dataframe(self):
+    def create_url_dataframe(self) -> pd.core.frame.DataFrame | None:
         """
         Generate URL links from a list of data and produce a pandas dataframe
-            :return dataframe, None (tabular, bool): Pandas dataframe
-                                                     containing URL links, or
-                                                     None if runtype has no
-                                                     files for download
+            :return dataframe (tabular) | None: Pandas dataframe containing
+                                                URL links, or None if runtype
+                                                has no files for download
         """
         if self.data_obj_dict:
-            data = []
-            logger.info(
-                "Creating urls dataframe for %s project: %s",
-                self.runtype,
-                self.project_name,
-            )
             try:
-                for filetype in self.data_obj_dict:
-                    for data_obj in self.data_obj_dict[filetype]:
-                        file_name = data_obj.get("describe").get("name")
-                        file_id = data_obj.get("id")
-                        url = self.get_url(file_id, self.project_id, file_name)
-                        gstt_dir = [
-                            config.GSTT_PATHS[self.script_mode][self.runtype][
-                                filetype
-                            ]["Via"]
-                        ]
-                        if any(
-                            pannumber in url
-                            for pannumber in self.stg_pannumbers
-                        ):
-                            gstt_dir.append(
-                                config.GSTT_PATHS[self.script_mode][
-                                    self.runtype
-                                ][filetype]["StG"]
-                            )
-
-                        merged_data = [
-                            file_name,
-                            data_obj.get("describe").get("folder"),
-                            filetype,
-                            url,
-                            gstt_dir,
-                        ]
-                        data.append(merged_data)
-
-                dataframe = pd.DataFrame(
-                    data,
-                    columns=config.COLS,
+                logger.info(
+                    "Creating urls dataframe for %s project: %s",
+                    self.runtype,
+                    self.project_name,
                 )
-                dataframe.sort_values(
-                    by=["Type", "Name"],
-                    inplace=True,
-                    ascending=True,
-                    ignore_index=True,
-                )  # Sort values by sample name
+                # Load into dataframe, explode so rows with more than one trust
+                # dir are split into distinct rows, sort values by sample name
+                dataframe = (
+                    pd.DataFrame(
+                        self.get_url_attrs(),
+                        columns=config.COLS,
+                    )
+                    .explode("GSTT_dir")
+                    .sort_values(
+                        by=["Type", "Name"],
+                        ascending=True,
+                        ignore_index=True,
+                    )
+                )
                 dataframe.index += 1  # Start sample numbering from 1
                 logger.info(
                     "Created urls dataframe for %s project: %s",
                     self.runtype,
                     self.project_name,
                 )
+                return dataframe
+
             except Exception as exception:
                 logger.error(
                     "An error was encountered when creating the urls "
@@ -292,14 +278,87 @@ class GenerateOutput:
                     exception,
                 )
                 sys.exit(1)
-            return dataframe
         else:
             logger.info(
                 "No URLs dataframe was created as there is no DNAnexus data "
                 "objects dictionary"
             )
 
-    def get_url(self, file_id, project_id, file_name):
+    def get_url_attrs(self) -> list:
+        """
+        Return list of lists, each list containing the items that populate the
+        rows of the CSV file
+            :return attrs_list (list): List of lists, each
+        """
+        try:
+            attrs_list = []
+            for filetype in self.data_obj_dict:
+                subdir = config.GSTT_PATHS[self.script_mode][self.runtype][
+                    filetype
+                ]["subdir"]
+                for data_obj in self.data_obj_dict[filetype]:
+                    file_name = data_obj.get("describe").get("name")
+                    folder = data_obj.get("describe").get("folder")
+                    file_id = data_obj.get("id")
+                    url = self.get_url(file_id, self.project_id, file_name)
+                    trust_dirs = self.get_trust_dirs(filetype, url)
+                    attrs_list.append(
+                        [file_name, folder, filetype, url, trust_dirs, subdir]
+                    )
+            return attrs_list
+        except Exception as exception:
+            logger.error(
+                "An exception was encountered when building the urls "
+                "attributes list, with exception: %s",
+                exception,
+            )
+            sys.exit(1)
+
+    def get_trust_dirs(self, filetype: str, url: str) -> list:
+        """
+        Return list of trust directories that the file requires download to. If
+        file name contains StG pan number, only download to the config-
+        specified StG dir. If file name contains custom panels capture pan
+        number, download to both StG and Synnovis config-specified dirs.
+        Otherwise, only download to the config-specified Synnovis dir.
+            :return trust_dirs (list): List of directories (strs)
+        """
+        trust_dirs = []
+        try:
+            if any(pannumber in url for pannumber in self.stg_pannumbers):
+                trust_dirs.append(
+                    config.GSTT_PATHS[self.script_mode][self.runtype][
+                        filetype
+                    ]["StG"]
+                )
+            elif any(pannumber in url for pannumber in self.cp_capture_pannos):
+                trust_dirs.extend(
+                    (
+                        config.GSTT_PATHS[self.script_mode][self.runtype][
+                            filetype
+                        ]["StG"],
+                        config.GSTT_PATHS[self.script_mode][self.runtype][
+                            filetype
+                        ]["Via"],
+                    )
+                )
+            else:
+                trust_dirs.append(
+                    config.GSTT_PATHS[self.script_mode][self.runtype][
+                        filetype
+                    ]["Via"]
+                )
+            return trust_dirs
+        except Exception as exception:
+            logger.error(
+                "Could not return trust directory list for url %s, "
+                "with exception: %s",
+                url,
+                exception,
+            )
+            sys.exit(1)
+
+    def get_url(self, file_id: str, project_id: str, file_name: str) -> str:
         """
         Create a url for a file in DNAnexus
             :return url (str): DNAnexus URL for a file
@@ -316,6 +375,7 @@ class GenerateOutput:
                 filename=file_name,
             )[0]
             logger.info("Url for %s retrieved successfully", dxfile)
+            return url
         except Exception as exception:
             logger.error(
                 "Could not retrieve url for file %s, with exception: %s",
@@ -323,11 +383,10 @@ class GenerateOutput:
                 exception,
             )
             sys.exit(1)
-        return url
 
-    def create_csv(self):
+    def create_csv(self) -> str | None:
         """
-        Write URLs to CSV, and return CSV format as string
+        Write dataframe to CSV, and return CSV format as string
             :return csv_contents (str): Return resulting CSV format as string
         """
         if self.url_dataframe is not None:
@@ -354,7 +413,7 @@ class GenerateOutput:
         else:
             logger.info("No CSV file was created as no URL dataframe exists")
 
-    def get_filetype_html(self):
+    def get_filetype_html(self) -> str:
         """
         Generate HTML for files by filetype
             :return filetype_html (str):    Html string
@@ -382,10 +441,10 @@ class GenerateOutput:
                 "there are no DNAnexus data objects marked for download"
             )
 
-    def get_number_of_files(self):
+    def get_number_of_files(self) -> int | None:
         """
         Calculate number of files to download for project
-            :return number_of_files (int):      Number of files
+            :return number_of_files (int) | None: Number of files
         """
         if self.data_num_dict:
             number_of_files = sum(self.data_num_dict.values())
@@ -408,7 +467,7 @@ class GenerateOutput:
                 "objects marked for download"
             )
 
-    def generate_html(self):
+    def generate_email_html(self) -> str:
         """
         Generate HTML
             :return html (str): Rendered html as a string
@@ -428,6 +487,7 @@ class GenerateOutput:
             with open(self.htmlfile_path, "w+", encoding="utf-8") as htmlfile:
                 htmlfile.write(html)
             logger.info("HTML successfully written to file")
+            return html
         except Exception as exception:
             logger.error(
                 "There was a problem generating the html file, with "
@@ -435,12 +495,11 @@ class GenerateOutput:
                 exception,
             )
             sys.exit(1)
-        return html
 
-    def get_message_obj(self):
+    def get_message_obj(self) -> MIMEMultipart | None:
         """
         Create message object
-            :return msg (object): Message object for email
+            :return msg (object) | None: Message object for email
         """
         msg = MIMEMultipart()
         # Both header types for maximum compatibility
@@ -462,12 +521,12 @@ class GenerateOutput:
             logger.info("No CSV file was attached for this run")
         return msg
 
-    def send_email(self):
+    def send_email(self) -> None:
         """
         Use smtplib to send an email
         """
         try:
-            # Configure SMTP server connection for sending log messages via e-mail
+            # Configure SMTP server connection for sending log msgs via e-mail
             server = smtplib.SMTP(
                 host=config.HOST, port=config.PORT, timeout=10
             )
@@ -475,7 +534,7 @@ class GenerateOutput:
             # Verbosity turned off - set to true to get debug messages
             server.set_debuglevel(False)
             server.starttls()  # Encrypt SMTP commands using TLS
-            server.ehlo()  # Identify client to ESMTP server using EHLO commands
+            server.ehlo()  # Identify client to ESMTP server using EHLO cmds
             # Login to server with user credentials
             server.login(self.email_user, self.email_pw)
             server.sendmail(
@@ -496,12 +555,12 @@ class GenerateOutput:
             sys.exit(1)
 
 
-def arg_parse():
+def arg_parse() -> dict:
     """
     Parse arguments supplied by the command line. Create argument parser,
     define command line arguments, then parse supplied command line arguments
     using the created argument parser
-        :return (Namespace object): Parsed command line attributes
+        :return (dict): Parsed command line attributes
     """
     parser = argparse.ArgumentParser(
         description="Generate a CSV file containing links for downloading "
@@ -553,6 +612,14 @@ def arg_parse():
         nargs="+",
     )
     requirednamed.add_argument(
+        "-CP",
+        "--cp_capture_pannos",
+        type=str,
+        help="Synnovis Custom Panels whole capture pan numbers, space separated",
+        required=True,
+        nargs="+",
+    )
+    requirednamed.add_argument(
         "-T",
         "--testing",
         type=bool,
@@ -562,7 +629,7 @@ def arg_parse():
     return vars(parser.parse_args())
 
 
-def update_tso_config_regex(tso_pannumbers):
+def update_tso_config_regex(tso_pannumbers: list) -> None:
     """
     Update config TSO500 regex incorporating command-line parsed Pan numbers
     """
@@ -592,7 +659,7 @@ def update_tso_config_regex(tso_pannumbers):
         sys.exit(1)
 
 
-def git_tag():
+def git_tag() -> str:
     """
     Obtain git tag from current commit
         :return stdout (str):   String containing stdout,
@@ -612,7 +679,8 @@ if __name__ == "__main__":
     args = arg_parse()
 
     logfile_path = os.path.join(
-        config.DOCUMENT_ROOT, f"{args['project_name']}.duty_csv.log"
+        os.getcwd(),
+        f"{args['project_name']}.{args['project_id']}.duty_csv.log",
     )
     logger = Logger(logfile_path).logger
     logger.info("Running duty_csv %s", git_tag())
@@ -634,8 +702,10 @@ if __name__ == "__main__":
     try:
         token = os.environ["DX_API_TOKEN"]
         whoami = dxpy.api.system_whoami()
-    except Exception as e:
-        logger.error("Unable to authenticate with DNAnexus API: %s", str(e))
+    except Exception as exception:
+        logger.error(
+            "Unable to authenticate with DNAnexus API: %s", str(exception)
+        )
         sys.exit(1)
     else:
         logger.info("Authenticated as %s", whoami)
@@ -656,5 +726,6 @@ if __name__ == "__main__":
         args["email_user"],
         args["email_pw"],
         args["stg_pannumbers"],
+        args["cp_capture_pannos"],
         SCRIPT_MODE,
     )

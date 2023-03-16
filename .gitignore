@@ -3,3 +3,6 @@ __pycache__
 project*
 /venv
 *.tar.gz
+*.csv
+*.html
+*.log

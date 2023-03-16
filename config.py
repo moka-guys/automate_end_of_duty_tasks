@@ -24,11 +24,11 @@ EMAIL_RECIPIENT = {
 }
 SMTP_DO_TLS = True
 
-COLS = ["Name", "Folder", "Type", "Url", "GSTT_dir"]
+COLS = ["Name", "Folder", "Type", "Url", "GSTT_dir", "subdir"]
 
 RUNTYPE_IDENTIFIERS = {
     "WES": {"present": ["WES", "NGS"], "absent": []},
-    "MokaPipe": {"present": ["NGS"], "absent": ["WES"]},
+    "CustomPanels": {"present": ["NGS"], "absent": ["WES"]},
     "LRPCR": {"present": ["LRPCR"], "absent": []},
     "SNP": {"present": ["SNP"], "absent": []},
     "TSO500": {"present": ["TSO"], "absent": []},
@@ -44,7 +44,7 @@ PER_RUNTYPE_DOWNLOADS = {
         }
     },
     **dict.fromkeys(
-        ["MokaPipe", "LRPCR"],
+        ["CustomPanels", "LRPCR"],
         {
             "exon_level_coverage": {
                 "folder": "/coverage",
@@ -79,71 +79,81 @@ PER_RUNTYPE_DOWNLOADS = {
             "folder": "/coverage",
             "regex": r"\S+(?:{}).exon_level.txt$",
         },
-        "results_zip": {
-            "folder": "/",
-            "regex": r"^(?:{})_Results.zip$",
-        },
         "sompy": {
             "folder": "/QC",
             "regex": r"\S+_MergedSmallVariants.genome.vcf.stats.csv$",
+        },
+        "results_zip": {
+            "folder": "/",
+            "regex": r"^(?:{})_Results.zip$",
         },
     },
     **dict.fromkeys(["ArcherDX", "SWIFT"], False),
 }
 
-P_BIOINF_TESTING = "P:\\Bioinformatics\\testing\\process_duty_csv"
+P_BIOINF_TESTING = "P:/Bioinformatics/testing/process_duty_csv"
 
 GSTT_PATHS = {
     "TEST": {
         "WES": {
             "exon_level": {
-                "Via": f"{P_BIOINF_TESTING}\\WES\\genesummaries\\",
+                "Via": f"{P_BIOINF_TESTING}/WES/genesummaries/",
                 "StG": False,
+                "subdir": None,
             }
         },
         **dict.fromkeys(
-            ["MokaPipe", "LRPCR"],
+            ["CustomPanels", "LRPCR"],
             {
                 "exon_level_coverage": {
-                    "Via": f"{P_BIOINF_TESTING}\\MokaPIPE\\%s\\coverage\\",
-                    "StG": f"{P_BIOINF_TESTING}\\StG\\%s\\coverage\\",
+                    "Via": f"{P_BIOINF_TESTING}/CustomPanels/%s%s/",
+                    "StG": f"{P_BIOINF_TESTING}/StG/%s/",
+                    "subdir": r"coverage/",
                 },
                 "rpkm": {
-                    "Via": f"{P_BIOINF_TESTING}\\MokaPIPE\\%s\\RPKM\\",
-                    "StG": f"{P_BIOINF_TESTING}\\StG\\%s\\RPKM\\",
+                    "Via": f"{P_BIOINF_TESTING}/CustomPanels/%s%s/",
+                    "StG": f"{P_BIOINF_TESTING}/StG/%s/",
+                    "subdir": r"RPKM/",
                 },
                 "fh_prs": {
-                    "Via": f"{P_BIOINF_TESTING}\\MokaPIPE\\%s\\FH_PRS\\",
-                    "StG": f"{P_BIOINF_TESTING}\\StG\\%s\\FH_PRS\\",
+                    "Via": f"{P_BIOINF_TESTING}/CustomPanels/%s%s/",
+                    "StG": f"{P_BIOINF_TESTING}/StG/%s/",
+                    "subdir": r"FH_PRS/",
                 },
                 "polyedge": {
-                    "Via": f"{P_BIOINF_TESTING}\\MokaPIPE\\%s\\polyedge\\",
-                    "StG": f"{P_BIOINF_TESTING}\\StG\\%s\\polyedge\\",
+                    "Via": f"{P_BIOINF_TESTING}/CustomPanels/%s%s/",
+                    "StG": f"{P_BIOINF_TESTING}/StG/%s/",
+                    "subdir": r"polyedge/",
                 },
             },
         ),
         "SNP": {
             "vcfs": {
-                "Via": f"{P_BIOINF_TESTING}\\SNP\\VCFs_Andrew\\",
+                "Via": f"{P_BIOINF_TESTING}/SNP/VCFs_Andrew/",
                 "StG": False,
+                "subdir": None,
             },
         },
         "TSO500": {
             "gene_level_coverage": {
-                "Via": f"{P_BIOINF_TESTING}\\TSO500\\coverage\\",
+                "Via": f"{P_BIOINF_TESTING}/TSO500/%s/",
                 "StG": False,
+                "subdir": r"coverage/",
             },
             "exon_level_coverage": {
-                "Via": f"{P_BIOINF_TESTING}\\TSO500\\coverage\\",
+                "Via": f"{P_BIOINF_TESTING}/TSO500/%s/",
                 "StG": False,
-            },
-            "results_zip": {
-                "Via": f"{P_BIOINF_TESTING}\\TSO500\\Results\\",
-                "StG": False,
+                "subdir": r"coverage/",
             },
             "sompy": {
-                "Via": f"{P_BIOINF_TESTING}\\TSO500\\sompy\\",
+                "Via": f"{P_BIOINF_TESTING}/TSO500/%s/",
                 "StG": False,
+                "subdir": r"sompy/",
+            },
+            "results_zip": {
+                "Via": f"{P_BIOINF_TESTING}/TSO500/%s/",
+                "StG": False,
+                "subdir": r"Results/",
             },
         },
         **dict.fromkeys(["ArcherDX", "ONC"], False),
@@ -151,53 +161,63 @@ GSTT_PATHS = {
     "PROD": {
         "WES": {
             "exon_level": {
-                "Via": "S:\\Genetics\\Bioinformatics\\NGS\\depthofcoverage\\genesummaries\\",
+                "Via": "S:/Genetics/Bioinformatics/NGS/depthofcoverage/genesummaries/",
                 "StG": False,
+                "subdir": None,
             },
         },
         **dict.fromkeys(
-            ["MokaPipe", "LRPCR"],
+            ["CustomPanels", "LRPCR"],
             {
                 "exon_level_coverage": {
-                    "Via": "P:\\DNA LAB\\Current\\NGS worksheets\\%s\\coverage\\",
-                    "StG": "P:\\DNA LAB\\StG SFTP\\StG SFTP outgoing\\%s\\coverage\\",
+                    "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
+                    "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s%s/",
+                    "subdir": r"coverage/",
                 },
                 "rpkm": {
-                    "Via": "P:\\DNA LAB\\Current\\NGS worksheets\\%s\\RPKM\\",
-                    "StG": "P:\\DNA LAB\\StG SFTP\\StG SFTP outgoing\\%s\\RPKM\\",
+                    "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
+                    "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s%s/",
+                    "subdir": r"RPKM/",
                 },
                 "fh_prs": {
-                    "Via": "P:\\DNA LAB\\Current\\NGS worksheets\\%s\\FH_PRS\\",
-                    "StG": "P:\\DNA LAB\\StG SFTP\\StG SFTP outgoing\\%s\\FH_PRS\\",
+                    "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
+                    "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s%s/",
+                    "subdir": r"FH_PRS/",
                 },
                 "polyedge": {
-                    "Via": "P:\\DNA LAB\\Current\\NGS worksheets\\%s\\polyedge\\",
-                    "StG": "P:\\DNA LAB\\StG SFTP\\StG SFTP outgoing\\%s\\polyedge\\",
+                    "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
+                    "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s%s/",
+                    "subdir": r"polyedge/",
                 },
             },
         ),
         "SNP": {
             "vcfs": {
-                "Via": "P:\\Bioinformatics\\VCFs_Andrew\\",
+                "Via": "P:/Bioinformatics/VCFs_Andrew/",
                 "StG": False,
+                "subdir": None,
             },
         },
         "TSO500": {
             "gene_level_coverage": {
-                "Via": "S:\\Genetics_Data2\\TSO500\\coverage\\",
+                "Via": "S:/Genetics_Data2/TSO500/%s/",
                 "StG": False,
+                "subdir": r"coverage/",
             },
             "exon_level_coverage": {
-                "Via": "S:\\Genetics_Data2\\TSO500\\coverage\\",
+                "Via": "S:/Genetics_Data2/TSO500/%s/",
                 "StG": False,
+                "subdir": r"coverage/",
             },
             "results_zip": {
-                "Via": "S:\\Genetics_Data2\\TSO500\\Results\\",
+                "Via": "S:/Genetics_Data2/TSO500/%s/",
                 "StG": False,
+                "subdir": r"Results/",
             },
             "sompy": {
-                "Via": "S:\\Genetics_Data2\\TSO500\\sompy\\",
+                "Via": "S:/Genetics_Data2/TSO500/%s/",
                 "StG": False,
+                "subdir": r"sompy/",
             },
         },
         **dict.fromkeys(["ArcherDX", "SWIFT"], False),

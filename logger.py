@@ -12,22 +12,23 @@ class Logger(object):
     """
     Simple logging class
 
-    shutdown_logs()
-        To prevent duplicate filehandlers and system handlers close and
-        remove all handlers for all log files that have a python logging object
-    _get_file_handler()
-        Returns the FileHandler associated with the logging object
-    _get_stream_handler()
-        Returns the StreamHandler associated with the logging object
-    get_logger()
-        Return a Python logging object
+    Methods
+        shutdown_logs()
+            To prevent duplicate filehandlers and system handlers close and
+            remove all handlers for all log files with a python logging object
+        _get_file_handler()
+            Returns the FileHandler associated with the logging object
+        _get_stream_handler()
+            Returns the StreamHandler associated with the logging object
+        get_logger()
+            Return a Python logging object
     """
 
     _formatter = logging.Formatter(
         config.LOGGING_FORMATTER
     )  # Log string format
 
-    def __init__(self, logfile_path):
+    def __init__(self, logfile_path: str):
         """
         Constructor for the Logger class
             :param logfile_path (str): Logfile path
@@ -43,7 +44,7 @@ class Logger(object):
             self.logger.removeHandler(handler)
             handler.close()
 
-    def _get_file_handler(self, filepath):
+    def _get_file_handler(self, filepath: str) -> logging.FileHandler:
         """
         Returns the FileHandler associated with the logging object
             :return file_handler (obj):   FileHandler object
@@ -53,7 +54,7 @@ class Logger(object):
         file_handler.setFormatter(self._formatter)
         return file_handler
 
-    def _get_stream_handler(self):
+    def _get_stream_handler(self) -> logging.StreamHandler:
         """
         Returns the StreamHandler associated with the logging object
             :return stream_handler (obj):   StreamHandler object
@@ -63,7 +64,7 @@ class Logger(object):
         stream_handler.setFormatter(self._formatter)
         return stream_handler
 
-    def get_logger(self, name, filepath):
+    def get_logger(self, name: str, filepath: str) -> logging.Logger:
         """
         Return a Python logging object
             :param name (str):       Logger name
