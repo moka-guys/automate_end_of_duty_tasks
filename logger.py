@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""mokaguys_logger.py
+"""logger.py
 
 Log messages using the python standard library logging module.
 """
