@@ -1,8 +1,8 @@
-# Automate End of Duty Tasks
+# Duty CSV
 
-The generates download links for a runfolder that are saved to a .csv file.
+This repository processes DNAnexus runfolders, identifying those requiring download to the GSTT network.
 
-The script supports all runtypes. For those runtypes that have downstream outputs requiring download onto the GSTT network, it will generate a CSV file containing URLs for the files requiring download, and attach the CSV file to an email containing instructions on how to download the files to the GSTT network. For those runtypes with no downstraem outputs, an email will still be sent but no CSV file will be attached. The email is sent to the bioinformatics shared inbox. Run types are defined in the configuration file.
+The script supports all runtypes. For those runtypes that have downstream outputs requiring download onto the GSTT network, it will generate a CSV file containing URLs for the files requiring download, and attach the CSV file to an email containing instructions on how to download the files to the GSTT network. For those runtypes with no downstream outputs, an email will still be sent but no CSV file will be attached. The email is sent to the bioinformatics shared inbox. Run types are defined in the configuration file.
 
 ## Running the script
 
@@ -22,9 +22,17 @@ Required named arguments:
                         Space separated pan numbers
   -SP STG_PANNUMBERS [STG_PANNUMBERS ...], --stg_pannumbers STG_PANNUMBERS [STG_PANNUMBERS ...]
                         Space separated pan numbers
+  -CP CP_CAPTURE_PANNOS [CP_CAPTURE_PANNOS ...], --cp_capture_pannos CP_CAPTURE_PANNOS [CP_CAPTURE_PANNOS ...]
+                        Synnovis Custom Panels whole capture pan numbers, space separated
   -T TESTING, --testing TESTING
                         Test mode, True or False
 ```
+
+TSO pan numbers should be Synnovis pan numbers - these are used by the scripts to define which samples to download to the trust network, and we only want to download Synnovis samples.
+
+St George's pan numbers are used to define which files need to be downloaded to the St George's area and which need to be downloaded to the Synnovis area.
+
+Custom Panels whole capture pan numbers are used to define which Custom Panels output files need to be downloaded to both the St George's area and the Synnovis area.
 
 Before running the script, the DX_API_TOKEN environment variable must be set and exported, where DNANEXUS_AUTH_TOKEN is the DNAnexus authentication token:
 
@@ -36,8 +44,17 @@ The script can then be run as follows:
 
 ```bash
 python3 duty_csv.py [-h] -P PROJECT_NAME -I PROJECT_ID -EU EMAIL_USER -PW EMAIL_PW -TP TSO_PANNUMBERS
-                   [TSO_PANNUMBERS ...] -SP STG_PANNUMBERS [STG_PANNUMBERS ...] -T TESTING
+                   [TSO_PANNUMBERS ...] -SP STG_PANNUMBERS [STG_PANNUMBERS ...] -CP CP_CAPTURE_PANNOS
+                   [CP_CAPTURE_PANNOS ...] -T TESTING
 ```
+
+### Test mode
+
+If running during development, the `-T True` flag should be used. This ensures that:
+1. Emails are sent to the email recipient specified in the config for test mode, as opposed to the production email address. This prevents spam
+2. The filepaths written to the CSV file are for the test area on the P drive as opposed to the production area. This ensures that when testing integration with the downstream [process_duty_csv](https://github.com/moka-guys/Automate_Duty_Process_CSV) script, files are not written to the production output areas on the P drive
+
+It is important that any changes to this script are fully tested for integration with the downstream [process_duty_csv](https://github.com/moka-guys/Automate_Duty_Process_CSV) script as part of the development cycle
 
 ## Outputs
 
@@ -54,10 +71,12 @@ The docker image is built, tagged and saved as a .tar.gz file using the Makefile
 sudo make build
 ```
 
-The docker image can be run as follows, making sure to suppy the DNAnexus authentication token as an environment variable:
+The docker image can be run as follows, making sure to supply the DNAnexus authentication token as an environment variable:
 
 ```bash
-sudo docker run -e DX_API_TOKEN=$DNANEXUS_AUTH_TOKEN -v $PATH_TO_OUTPUTS:/outputs seglh/duty_csv:$TAG -P PROJECT_NAME -I PROJECT_ID -EU EMAIL_USER -PW EMAIL_PW -TP TSO_PANNUMBER TSO_PANNUMBER TSO_PANNUMBER
+sudo docker run -e DX_API_TOKEN=$DNANEXUS_AUTH_TOKEN -v $PATH_TO_OUTPUTS:/outputs seglh/duty_csv:$TAG [-h] -P PROJECT_NAME -I PROJECT_ID -EU EMAIL_USER -PW EMAIL_PW -TP TSO_PANNUMBERS
+                   [TSO_PANNUMBERS ...] -SP STG_PANNUMBERS [STG_PANNUMBERS ...] -CP CP_CAPTURE_PANNOS
+                   [CP_CAPTURE_PANNOS ...] -T TESTING
 ```
 
 The current and all previous versions of the tool are stored as dockerised versions in 001_ToolsReferenceData project as .tar.gz files.
