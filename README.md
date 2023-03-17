@@ -24,8 +24,7 @@ Required named arguments:
                         Space separated pan numbers
   -CP CP_CAPTURE_PANNOS [CP_CAPTURE_PANNOS ...], --cp_capture_pannos CP_CAPTURE_PANNOS [CP_CAPTURE_PANNOS ...]
                         Synnovis Custom Panels whole capture pan numbers, space separated
-  -T TESTING, --testing TESTING
-                        Test mode, True or False
+  -T, --testing         Test mode
 ```
 
 TSO pan numbers should be Synnovis pan numbers - these are used by the scripts to define which samples to download to the trust network, and we only want to download Synnovis samples.
@@ -45,12 +44,12 @@ The script can then be run as follows:
 ```bash
 python3 duty_csv.py [-h] -P PROJECT_NAME -I PROJECT_ID -EU EMAIL_USER -PW EMAIL_PW -TP TSO_PANNUMBERS
                    [TSO_PANNUMBERS ...] -SP STG_PANNUMBERS [STG_PANNUMBERS ...] -CP CP_CAPTURE_PANNOS
-                   [CP_CAPTURE_PANNOS ...] -T TESTING
+                   [CP_CAPTURE_PANNOS ...] [-T]
 ```
 
 ### Test mode
 
-If running during development, the `-T True` flag should be used. This ensures that:
+If running during development, the `-T` flag should be used. This ensures that:
 1. Emails are sent to the email recipient specified in the config for test mode, as opposed to the production email address. This prevents spam
 2. The filepaths written to the CSV file are for the test area on the P drive as opposed to the production area. This ensures that when testing integration with the downstream [process_duty_csv](https://github.com/moka-guys/Automate_Duty_Process_CSV) script, files are not written to the production output areas on the P drive
 
@@ -76,7 +75,7 @@ The docker image can be run as follows, making sure to supply the DNAnexus authe
 ```bash
 sudo docker run -e DX_API_TOKEN=$DNANEXUS_AUTH_TOKEN -v $PATH_TO_OUTPUTS:/outputs seglh/duty_csv:$TAG [-h] -P PROJECT_NAME -I PROJECT_ID -EU EMAIL_USER -PW EMAIL_PW -TP TSO_PANNUMBERS
                    [TSO_PANNUMBERS ...] -SP STG_PANNUMBERS [STG_PANNUMBERS ...] -CP CP_CAPTURE_PANNOS
-                   [CP_CAPTURE_PANNOS ...] -T TESTING
+                   [CP_CAPTURE_PANNOS ...] [-T]
 ```
 
 The current and all previous versions of the tool are stored as dockerised versions in 001_ToolsReferenceData project as .tar.gz files.
