@@ -622,9 +622,10 @@ def arg_parse() -> dict:
     requirednamed.add_argument(
         "-T",
         "--testing",
-        type=bool,
-        help="Test mode, True or False",
-        required=True,
+        action="store_true",
+        help="Test mode",
+        default=False,
+        required=False,
     )
     return vars(parser.parse_args())
 
