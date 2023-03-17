@@ -26,6 +26,8 @@ SMTP_DO_TLS = True
 
 COLS = ["Name", "Folder", "Type", "Url", "GSTT_dir", "subdir"]
 
+# Signifies what identifies the runfolder name as being that run type - both
+# substrings that must be present and substrings that must be absent
 RUNTYPE_IDENTIFIERS = {
     "WES": {"present": ["WES", "NGS"], "absent": []},
     "CustomPanels": {"present": ["NGS"], "absent": ["WES"]},
