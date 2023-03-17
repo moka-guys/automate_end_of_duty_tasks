@@ -1,102 +1,84 @@
-# Automate End of Duty Tasks
+# Duty CSV
 
-The script searches the DNAnexus for recently created production projects '002_' and generates download links that are saved to a .csv file. 
+This repository processes DNAnexus runfolders, identifying those requiring download to the GSTT network.
 
-An email is sent to the Duty Bioinformatician with instructions on how to download the files to the appropriate locations on the GST-Trust network. 
+The script supports all runtypes. For those runtypes that have downstream outputs requiring download onto the GSTT network, it will generate a CSV file containing URLs for the files requiring download, and attach the CSV file to an email containing instructions on how to download the files to the GSTT network. For those runtypes with no downstream outputs, an email will still be sent but no CSV file will be attached. The email is sent to the bioinformatics shared inbox. Run types are defined in the configuration file.
 
-The script supports the following projects:
+## Running the script
 
-* WES
-* TSO500
-* SNP
-* MokaPipe
+The script takes the following command line arguments:
 
-## Deployment with Ansible-Playbook
-
-The script runs on the Genapp test server. To deploy the scrip please use the ansible-playbook:
-[automate_end_of_duty_tasks.yml](https://github.com/moka-guys/deployment/blob/develop/playbooks/automate_end_of_duty_tasks.yml)\
-On the Genapp Test Server go to the deployment directory:
-```xml
-cd /home/mokaguys/code/deployment
 ```
-Run the ansible playbook:
-```xml
-ansible-playbook playbooks/automate_end_of_duty_tasks.yml
+Required named arguments:
+  -P PROJECT_NAME, --project_name PROJECT_NAME
+                        Name of project to obtain download links from
+  -I PROJECT_ID, --project_id PROJECT_ID
+                        ID of project to obtain download links from
+  -EU EMAIL_USER, --email_user EMAIL_USER
+                        Username for mail server
+  -PW EMAIL_PW, --email_pw EMAIL_PW
+                        Password for mail server
+  -TP TSO_PANNUMBERS [TSO_PANNUMBERS ...], --tso_pannumbers TSO_PANNUMBERS [TSO_PANNUMBERS ...]
+                        Space separated pan numbers
+  -SP STG_PANNUMBERS [STG_PANNUMBERS ...], --stg_pannumbers STG_PANNUMBERS [STG_PANNUMBERS ...]
+                        Space separated pan numbers
+  -CP CP_CAPTURE_PANNOS [CP_CAPTURE_PANNOS ...], --cp_capture_pannos CP_CAPTURE_PANNOS [CP_CAPTURE_PANNOS ...]
+                        Synnovis Custom Panels whole capture pan numbers, space separated
+  -T TESTING, --testing TESTING
+                        Test mode, True or False
 ```
-The variables are located here:
-```xml
-/home/mokaguys/code/deployment/playbooks/vars/automate_end_of_duty_tasks.yml
+
+TSO pan numbers should be Synnovis pan numbers - these are used by the scripts to define which samples to download to the trust network, and we only want to download Synnovis samples.
+
+St George's pan numbers are used to define which files need to be downloaded to the St George's area and which need to be downloaded to the Synnovis area.
+
+Custom Panels whole capture pan numbers are used to define which Custom Panels output files need to be downloaded to both the St George's area and the Synnovis area.
+
+Before running the script, the DX_API_TOKEN environment variable must be set and exported, where DNANEXUS_AUTH_TOKEN is the DNAnexus authentication token:
+
+```bash
+export DX_API_TOKEN=$DNANEXUS_AUTH_TOKEN
 ```
 
-## Deployment without Ansible-Playbook
+The script can then be run as follows:
 
-To use the script without using ansible-playbook requires the user to generate the following folder structure:
-* Automate_Duty
-    * LOG
-    * SNP/archive
-    * WES/archive
-    * MokaPipe/archive
-    * TSO500/archive
-    * automate_end_of_duty_tasks (obtained from GitHub repository)
-
-Use the following commands:
-~~~
-mkdir Automate_Duty
-cd Automate_Duty
-mkdir LOG
-mkdir SNP
-mkdir SNP/archive
-mkdir WES
-mkdir WES/archive
-mkdir MokaPipe
-mkdir MokaPipe/archive
-mkdir TSO500
-mkdir TSO500/archive
-git clone https://github.com/moka-guys/automate_end_of_duty_tasks.git
-~~~
-To run the script:
-~~~
-python automate_end_of_duty_tasks/automateEODT.py -7d
-~~~
-
--7d refers to the time frame the script will search the DNAnexus for projects created in the last 7 days from now.
-The period of time can be changed by using the following key:
-    “s”, “m”, “d”, “w”, or “y” (for seconds, minutes, days, weeks, or years)
-
-Note: <br />
-To run the script requires DNAnexus read-only token saved to a file called DNAnexus_auth_token.py inside the automate_end_of_duty_tasks folder. <br />
-Inside the DNAnexus_auth_token.py type:
-~~~
-token = 'XXXXXXXXXXXXXXXXXXXXXXX'
-~~~
-The read only token can be found in [BitWarden](https://vault.bitwarden.com/#/login) by searching for dnanexus interpretation request login. The token is valid for one year. 
-
-## Downloading files using links from CSV files on the Trust Network
-
-The script is set up to search for DNAnexus projects created in the previous 7 days. 
-
-The email containing csv attachment is sent to mokaguys (gst-tr.mokaguys@nhs.net) 
-
-The duty Bioinformatician has to save the csv file(s) to the following location:
-```xml
-P:\Bioinformatics\Duty_Bioinformatics_CSV
+```bash
+python3 duty_csv.py [-h] -P PROJECT_NAME -I PROJECT_ID -EU EMAIL_USER -PW EMAIL_PW -TP TSO_PANNUMBERS
+                   [TSO_PANNUMBERS ...] -SP STG_PANNUMBERS [STG_PANNUMBERS ...] -CP CP_CAPTURE_PANNOS
+                   [CP_CAPTURE_PANNOS ...] -T TESTING
 ```
-The Duty Bioinformatician needs to Open PowerShell.
 
-Please set up a PowerShell profile on the Trust Computer (Citrix) by following this link: [article](https://viapath.service-now.com/nav_to.do?uri=%2Fkb_view.do%3Fsys_kb_id%3Df076201c1b4cd5500dc321f6b04bcbc7)
+### Test mode
 
-In PowerShell type:
-```xml
-duty
+If running during development, the `-T True` flag should be used. This ensures that:
+1. Emails are sent to the email recipient specified in the config for test mode, as opposed to the production email address. This prevents spam
+2. The filepaths written to the CSV file are for the test area on the P drive as opposed to the production area. This ensures that when testing integration with the downstream [process_duty_csv](https://github.com/moka-guys/Automate_Duty_Process_CSV) script, files are not written to the production output areas on the P drive
+
+It is important that any changes to this script are fully tested for integration with the downstream [process_duty_csv](https://github.com/moka-guys/Automate_Duty_Process_CSV) script as part of the development cycle
+
+## Outputs
+
+The script has 3 file outputs:
+* CSV file - contains information required by the [process_duty_csv](https://github.com/moka-guys/Automate_Duty_Process_CSV) script to download the required files output by the pipeline from DNAnexus to the required locations on the GSTT network
+* HTML file - this file is the HTMl that is used as the email message contents
+* Log file - contains all log messages from running the script
+
+## Docker image
+
+The docker image is built, tagged and saved as a .tar.gz file using the Makefile as follows:
+
+```bash
+sudo make build
 ```
-## Developers
-Igor Malashchuk\
-STP Trainee in Clinical Bioinformatics\
-Guy's and St Thomas's NHS Trust\
-Sign off date: 22nd June 2022
 
+The docker image can be run as follows, making sure to supply the DNAnexus authentication token as an environment variable:
 
+```bash
+sudo docker run -e DX_API_TOKEN=$DNANEXUS_AUTH_TOKEN -v $PATH_TO_OUTPUTS:/outputs seglh/duty_csv:$TAG [-h] -P PROJECT_NAME -I PROJECT_ID -EU EMAIL_USER -PW EMAIL_PW -TP TSO_PANNUMBERS
+                   [TSO_PANNUMBERS ...] -SP STG_PANNUMBERS [STG_PANNUMBERS ...] -CP CP_CAPTURE_PANNOS
+                   [CP_CAPTURE_PANNOS ...] -T TESTING
+```
 
+The current and all previous versions of the tool are stored as dockerised versions in 001_ToolsReferenceData project as .tar.gz files.
 
-
-
+### Developed by the Synnovis Genome Informatics Team
