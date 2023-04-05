@@ -314,46 +314,62 @@
   </head>
 
   <body>
-    <span class="preheader">This is preheader text. Some clients will show this text as a preview.</span>
     <div class="content">
       {% if script_mode == 'TEST' %}
-      <p><b>TEST MODE. PLEASE DO NOT PROCESS THE RUN.</b></p>
+      <p><b>TEST MODE. PLEASE FOLLOW THE BELOW INSTRUCTIONS WHEN TESTING</b></p>
       {% endif %}
       <p>The following project requires processing:</p>
       <p><b>{{ project_name }} </b></p>
-      <p>The project is a <b>{{ runtype }}</b> run.</p>
+      <p>The project is a <b>{{ runtype }}</b> run</p>
       {% if runtype == 'TSO500' %}
-      <p><b><i>WARNING! TSO500 Results files can take some time to download.</i></b></p>
+      <p><b><i>WARNING! TSO500 Results files can take some time to download</i></b></p>
+      {% endif %}
+      {% if number_of_files == 'None' %}
+      <p>There are no files to download for this run</p>
       {% endif %}
       {% if number_of_files != None %}
       <br>
       <p>Please carry out the following:</p>
       <p>
       <ol>
-        <li>Download the attached csv files to the following folder:</li>
-        <br>
+        <li>Download the attached csv file to the following folder:</li>
         <ul>
-          <li><b>P:\Bioinformatics\Duty_Bioinformatics_CSV</b></li>
+          {% if script_mode == 'TEST' %}
+          <li>
+            <b>P:\Bioinformatics\testing\process_duty_csv</b>
+          </li>
+          {% elif script_mode == 'PROD' %}
+          <li>
+            <b>P:\Bioinformatics\Duty_Bioinformatics_CSV</b>
+          </li>
+          {% endif %}
         </ul>
-        <li>Open powershell and type the command: <b>duty</b></li>
+        <li>Open powershell by typing <b>powershell</b> in the address field of File Explorer</li>
+        {% if script_mode == 'PROD' %}
+        <li>Type the command: <b>duty</b></li>
         <br>
-        <ul>
-          <li>If the command above does not work follow these insrtuctions:</li>
-        </ul>
-        <ol>
-          <li>Open command prompt by typing <b>cmd</b> in the address field of File Explorer</li>
-          <li>Copy and paste the following command:</li>
-          <br>
-          <ul>
-            <li><b>S:\Genetics_Data2\Array\Software\Python-3.6.5\python S:\Genetics_Data2\Array\Software\process_duty_csv\process_duty_csv.py</b></li>
-          </ul>
-        </ol>
       </ol>
-      </p>
-      <p>A powershell profile for duty can be set up as per <a href="https://viapath.service-now.com/nav_to.do?uri=%2Fkb_view.do%3Fsys_kb_id%3Df076201c1b4cd5500dc321f6b04bcbc7">this KB article</a></p>
-      {% else %}
-      <p>There are no files to download for this run.</p>
-      {% endif %}
+      <p> If the command above does not work, run the following command:</p>
+      <ul>
+        <li>
+          <b>S:\Genetics_Data2\Array\Software\Python-3.6.5\python S:\Genetics_Data2\Array\Software\process_duty_csv\process_duty_csv.py</b>
+        </li>
+        </li>
+      </ul>
+      {% elif script_mode == 'TEST' %}
+      <li>Run the following command, making sure you include the <b>test flag</b>:</li>
+      <ul>
+        <li>
+          <b>S:\Genetics_Data2\Array\Software\Python-3.6.5\python P:\Bioinformatics\testing\process_duty_csv\process_duty_csv\process_duty_csv.py -T</b>
+        </li>
+        </ol>
+        {% endif %}
+        <br>
+        </p>
+        {% if script_mode == 'PROD' %}
+        <p>A powershell profile for duty can be set up as per <a href="https://viapath.service-now.com/nav_to.do?uri=%2Fkb_view.do%3Fsys_kb_id%3Df076201c1b4cd5500dc321f6b04bcbc7">this KB article</a></p>
+        {% endif %}
+        {% endif %}
     </div>
     <br>
     <div class="additional">
