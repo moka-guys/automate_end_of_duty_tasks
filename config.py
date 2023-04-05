@@ -173,22 +173,22 @@ GSTT_PATHS = {
             {
                 "exon_level_coverage": {
                     "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
-                    "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s%s/",
+                    "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s/",
                     "subdir": r"coverage/",
                 },
                 "rpkm": {
                     "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
-                    "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s%s/",
+                    "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s/",
                     "subdir": r"RPKM/",
                 },
                 "fh_prs": {
                     "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
-                    "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s%s/",
+                    "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s/",
                     "subdir": r"FH_PRS/",
                 },
                 "polyedge": {
                     "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
-                    "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s%s/",
+                    "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s/",
                     "subdir": r"polyedge/",
                 },
             },
