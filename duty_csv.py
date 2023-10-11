@@ -639,6 +639,13 @@ def update_tso_config_regex(tso_pannumbers: list) -> None:
         tso_pannumbers,
     )
     try:
+        config.PER_RUNTYPE_DOWNLOADS["TSO500"]["results_zip"][
+                "folder"
+            ] = config.PER_RUNTYPE_DOWNLOADS["TSO500"]["results_zip"][
+                "folder"
+            ].format(
+                ("|").join(tso_pannumbers)
+            )
         for filetype in [
             "gene_level_coverage",
             "exon_level_coverage",
@@ -651,6 +658,7 @@ def update_tso_config_regex(tso_pannumbers: list) -> None:
             ].format(
                 ("|").join(tso_pannumbers)
             )
+
     except Exception as exception:
         logger.info(
             "The following error was encountered when trying to update the"
