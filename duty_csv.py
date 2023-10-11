@@ -651,6 +651,7 @@ def update_tso_config_regex(tso_pannumbers: list) -> None:
             ].format(
                 ("|").join(tso_pannumbers)
             )
+
     except Exception as exception:
         logger.info(
             "The following error was encountered when trying to update the"
