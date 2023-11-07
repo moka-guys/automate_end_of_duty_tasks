@@ -89,10 +89,6 @@ PER_RUNTYPE_DOWNLOADS = {
             "folder": "/QC",
             "regex": r"\S+_MergedSmallVariants.genome.vcf.stats.csv$",
         },
-        "results_zip": {
-            "folder": "/results",
-            "regex": r"\S+(?:{}).zip$",
-        },
         "metrics": {
             "folder": "/analysis_folder/Results/",
             "regex": r"^MetricsOutput\S*.tsv$",
@@ -165,11 +161,6 @@ GSTT_PATHS = {
                 "StG": False,
                 "subdir": r"sompy/",
             },
-            "results_zip": {
-                "Via": f"{P_BIOINF_TESTING}/TSO500/%s/",
-                "StG": False,
-                "subdir": r"Results/",
-            },
             "metrics": {
                 "Via": f"{P_BIOINF_TESTING}/TSO500/%s/",
                 "StG": False,
@@ -238,11 +229,6 @@ GSTT_PATHS = {
                 "Via": "S:/Genetics_Data2/TSO500/%s/",
                 "StG": False,
                 "subdir": r"sompy/",
-            },
-            "results_zip": {
-                "Via": "S:/Genetics_Data2/TSO500/%s/",
-                "StG": False,
-                "subdir": r"Results/",
             },
             "metrics": {
                 "Via": "S:/Genetics_Data2/TSO500/%s/",
