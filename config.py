@@ -64,10 +64,14 @@ PER_RUNTYPE_DOWNLOADS = {
                 "folder": "/polyedge",
                 "regex": r"\S+_polyedge.pdf$",
             },
+            "exomedepth": {
+                "folder":"/exomedepth_output", # TODO add
+                "regex": r"\S+_output.pdf$",
+            }
         },
     ),
     "SNP": {
-        "vcfs": {
+        "vcf": {
             "folder": "/output",
             "regex": r"\S+.sites_present_reheader_filtered_normalised.vcf$",
         },
@@ -86,8 +90,12 @@ PER_RUNTYPE_DOWNLOADS = {
             "regex": r"\S+_MergedSmallVariants.genome.vcf.stats.csv$",
         },
         "results_zip": {
-            "folder": "/",
-            "regex": r"^(?:{})_Results.zip$",
+            "folder": "/results",
+            "regex": r"\S+(?:{}).zip$",
+        },
+        "metrics": {
+            "folder": "/analysis_folder/Results/",
+            "regex": r"^MetricsOutput\S*.tsv$",
         },
     },
     **dict.fromkeys(["ArcherDX", "SWIFT"], False),
@@ -127,10 +135,15 @@ GSTT_PATHS = {
                     "StG": f"{P_BIOINF_TESTING}/StG/%s/",
                     "subdir": r"polyedge/",
                 },
+                "exomedepth": {
+                    "Via": f"{P_BIOINF_TESTING}/CustomPanels/%s%s/",
+                    "StG": f"{P_BIOINF_TESTING}/StG/%s/",
+                    "subdir": r"exomedepth/",
+                },
             },
         ),
         "SNP": {
-            "vcfs": {
+            "vcf": {
                 "Via": f"{P_BIOINF_TESTING}/SNP/VCFs_Andrew/",
                 "StG": False,
                 "subdir": None,
@@ -157,6 +170,11 @@ GSTT_PATHS = {
                 "StG": False,
                 "subdir": r"Results/",
             },
+            "metrics": {
+                "Via": f"{P_BIOINF_TESTING}/TSO500/%s/",
+                "StG": False,
+                "subdir": r"Results/",
+        },
         },
         **dict.fromkeys(["ArcherDX", "ONC"], False),
     },
@@ -191,10 +209,15 @@ GSTT_PATHS = {
                     "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s/",
                     "subdir": r"polyedge/",
                 },
+                "exomedepth": {
+                    "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
+                    "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s/",
+                    "subdir": r"exomedepth/",
+                },
             },
         ),
         "SNP": {
-            "vcfs": {
+            "vcf": {
                 "Via": "P:/Bioinformatics/VCFs_Andrew/",
                 "StG": False,
                 "subdir": None,
@@ -211,17 +234,21 @@ GSTT_PATHS = {
                 "StG": False,
                 "subdir": r"coverage/",
             },
-            "results_zip": {
-                "Via": "S:/Genetics_Data2/TSO500/%s/",
-                "StG": False,
-                "subdir": r"Results/",
-            },
             "sompy": {
                 "Via": "S:/Genetics_Data2/TSO500/%s/",
                 "StG": False,
                 "subdir": r"sompy/",
             },
+            "results_zip": {
+                "Via": "S:/Genetics_Data2/TSO500/%s/",
+                "StG": False,
+                "subdir": r"Results/",
+            },
+            "metrics": {
+                "Via": "S:/Genetics_Data2/TSO500/%s/",
+                "StG": False,
+                "subdir": r"Results/",
         },
         **dict.fromkeys(["ArcherDX", "SWIFT"], False),
     },
-}
+}}
