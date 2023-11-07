@@ -65,9 +65,9 @@ PER_RUNTYPE_DOWNLOADS = {
                 "regex": r"\S+_polyedge.pdf$",
             },
             "exomedepth": {
-                "folder":"/exomedepth_output", # TODO add
+                "folder": "/exomedepth_output",
                 "regex": r"\S+_output.pdf$",
-            }
+            },
         },
     ),
     "SNP": {
@@ -164,8 +164,8 @@ GSTT_PATHS = {
             "metrics": {
                 "Via": f"{P_BIOINF_TESTING}/TSO500/%s/",
                 "StG": False,
-                "subdir": r"Results/",
-        },
+                "subdir": r"metrics/",
+            },
         },
         **dict.fromkeys(["ArcherDX", "ONC"], False),
     },
@@ -233,8 +233,9 @@ GSTT_PATHS = {
             "metrics": {
                 "Via": "S:/Genetics_Data2/TSO500/%s/",
                 "StG": False,
-                "subdir": r"Results/",
+                "subdir": r"metrics/",
+            },
+            **dict.fromkeys(["ArcherDX", "SWIFT"], False),
         },
-        **dict.fromkeys(["ArcherDX", "SWIFT"], False),
     },
-}}
+}
