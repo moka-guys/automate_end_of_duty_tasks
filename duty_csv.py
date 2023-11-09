@@ -642,7 +642,6 @@ def update_tso_config_regex(tso_pannumbers: list) -> None:
         for filetype in [
             "gene_level_coverage",
             "exon_level_coverage",
-            "results_zip",
         ]:
             config.PER_RUNTYPE_DOWNLOADS["TSO500"][filetype][
                 "regex"
