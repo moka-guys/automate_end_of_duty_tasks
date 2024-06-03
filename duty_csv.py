@@ -56,6 +56,9 @@ class GenerateOutput:
             Create a url for a file in DNAnexus
         create_csv()
             Write dataframe to CSV, and return CSV format as string
+        create_chrome_download_cmds()
+            Creates a text file containing downloads that can be run to download the files via chrome,
+            to be used in case the powershell script does not work over citrix / VPN
         get_filetype_html()
             Generate HTML for files by filetype
         get_number_of_files()
@@ -107,8 +110,13 @@ class GenerateOutput:
             f"{self.project_name}.{self.project_id}.{self.runtype}"
             f".duty_csv.html"
         )
+        self.txtfile_name = (
+            f"{self.project_name}.{self.project_id}.{self.runtype}"
+            f".duty_csv.txt"
+        )
         self.csvfile_path = os.path.join(os.getcwd(), self.csvfile_name)
         self.htmlfile_path = os.path.join(os.getcwd(), self.htmlfile_name)
+        self.txtfile_path = os.path.join(os.getcwd(), self.txtfile_name)
         self.template = jinja2.Environment(
             loader=jinja2.FileSystemLoader(config.TEMPLATE_DIR),
             autoescape=True,
@@ -121,6 +129,7 @@ class GenerateOutput:
         self.data_obj_dict, self.data_num_dict = self.get_data_dicts()
         self.url_dataframe = self.create_url_dataframe()
         self.csv_contents = self.create_csv()
+        self.txt_contents = self.create_chrome_download_cmds()
         self.filetype_html = self.get_filetype_html()
         self.number_of_files = self.get_number_of_files()
         self.html = self.generate_email_html()
@@ -413,6 +422,36 @@ class GenerateOutput:
         else:
             logger.info("No CSV file was created as no URL dataframe exists")
 
+    def create_chrome_download_cmds(self) -> str | None:
+        """
+        Creates a text file containing downloads that can be run to download the files via chrome,
+        to be used in case the powershell script does not work over citrix / VPN
+            :return txt_contents (str): Return resulting TXT format as string
+        """
+        if self.url_dataframe is not None:
+            logger.info(
+                "Creating chrome download commands file for %s project: %s",
+                self.runtype,
+                self.project_name
+            )
+            try:
+                urls = self.url_dataframe["Url"]
+                urls['Url'] = ('start chrome ' + urls['Url'])
+                urls = urls.rename(columns={'Url': 'Download_cmd'})
+                txt_contents = self.url_dataframe.to_csv(index=False, sep = ' ')
+                logger.info("TXT file has been created: %s", self.csvfile_path)
+                return txt_contents
+
+            except Exception as exception:
+                logger.error(
+                    "An error was encountered when writing the chrome downloads commands to text file: %s",
+                    exception,
+                )
+                sys.exit(1)
+        else:
+            logger.info("No chrome download command file was created as no URL dataframe exists")
+
+
     def get_filetype_html(self) -> str:
         """
         Generate HTML for files by filetype
@@ -509,11 +548,21 @@ class GenerateOutput:
         msg["From"] = config.EMAIL_SENDER
         msg["To"] = self.email_recipient
         msg.attach(MIMEText(self.html, "html"))
+        msg = self.attach_file(self.csv_contents, self.csvfile_name, msg)
+        msg = self.attach_file(self.txt_contents, self.txtfile_name, msg)
+        return msg
 
+    def attach_file(self, contents, name, msg) -> None:
+        """
+        Attach file to email
+            :param contents:        Contents of file attachment
+            :param name (str):      Name of file
+            :param msg (object):    Message object for email
+        """
         if self.csv_contents:
-            attachment = MIMEApplication(self.csv_contents)
+            attachment = MIMEApplication(contents)
             attachment["Content-Disposition"] = (
-                f"attachment; " f'filename="{self.csvfile_name}"'
+                f"attachment; " f'filename="{name}"'
             )
             msg.attach(attachment)
             logger.info("Successfully created email message")
