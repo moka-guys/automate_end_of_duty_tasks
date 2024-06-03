@@ -73,7 +73,7 @@ sudo make build
 The docker image can be run as follows, making sure to supply the DNAnexus authentication token as an environment variable:
 
 ```bash
-sudo docker run -e DX_API_TOKEN=$DNANEXUS_AUTH_TOKEN -v $PATH_TO_OUTPUTS:/outputs seglh/duty_csv:$TAG [-h] -P PROJECT_NAME -I PROJECT_ID -EU EMAIL_USER -PW EMAIL_PW -TP TSO_PANNUMBERS -SP STG_PANNUMBERS -CP CP_CAPTURE_PANNOS
+sudo docker run --rm -e DX_API_TOKEN=$DNANEXUS_AUTH_TOKEN -v $PATH_TO_OUTPUTS:/outputs seglh/duty_csv:$TAG [-h] -P PROJECT_NAME -I PROJECT_ID -EU EMAIL_USER -PW EMAIL_PW -TP TSO_PANNUMBERS -SP STG_PANNUMBERS -CP CP_CAPTURE_PANNOS
 ```
 
 The current and all previous versions of the tool are stored as dockerised versions in 001_ToolsReferenceData project as .tar.gz files.
