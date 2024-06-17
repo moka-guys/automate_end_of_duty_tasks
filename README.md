@@ -59,6 +59,7 @@ It is important that any changes to this script are fully tested for integration
 
 The script has 3 file outputs:
 * CSV file - contains information required by the [process_duty_csv](https://github.com/moka-guys/Automate_Duty_Process_CSV) script to download the required files output by the pipeline from DNAnexus to the required locations on the GSTT network
+* TXT file - contains commands that can be run in powershell to download the files via Chrome
 * HTML file - this file is the HTMl that is used as the email message contents
 * Log file - contains all log messages from running the script
 
