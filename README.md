@@ -4,6 +4,14 @@ This repository processes DNAnexus runfolders, identifying those requiring downl
 
 The script supports all runtypes. For those runtypes that have downstream outputs requiring download onto the GSTT network, it will generate a CSV and text file containing URLs for the files requiring download, and attach the CSV and text file to an email containing instructions on how to download the files to the GSTT network. For those runtypes with no downstream outputs, an email will still be sent but no CSV or text file will be attached. The email is sent to the bioinformatics shared inbox. Run types are defined in the configuration file.
 
+Currently supports the following run types:
+* ArcherDX
+* OncoDEEP
+* TSO500
+* WES
+* SNP
+* Custom Panels
+
 ## Running the script
 
 The script takes the following command line arguments:

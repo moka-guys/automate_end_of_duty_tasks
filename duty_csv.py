@@ -402,6 +402,9 @@ class GenerateOutput:
             try:
                 urls = "start chrome " + self.url_dataframe["Url"]
                 urls.drop_duplicates(inplace=True)
+                # Write to file
+                urls.to_csv(self.txtfile_path, index=False)
+                # Save as variable
                 txt_contents = urls.to_csv(index=False)
                 logger.info(f"TXT file has been created: {self.txtfile_path}")
                 return txt_contents
@@ -506,6 +509,7 @@ class GenerateOutput:
         msg["From"] = config.EMAIL_SENDER
         msg["To"] = self.email_recipient
         msg.attach(MIMEText(self.html, "html"))
+        logger.info("HTML email message attached")
         msg = self.attach_file(self.csv_contents, self.csvfile_name, msg)
         msg = self.attach_file(self.txt_contents, self.txtfile_name, msg)
         return msg
@@ -518,10 +522,13 @@ class GenerateOutput:
             :param msg (object):    Message object for email
         """
         if self.csv_contents:
-            attachment = MIMEApplication(contents)
-            attachment["Content-Disposition"] = f'attachment; filename="{name}"'
-            msg.attach(attachment)
-            logger.info("Successfully created email message")
+            try:
+                attachment = MIMEApplication(contents)
+                attachment["Content-Disposition"] = f'attachment; filename="{name}"'
+                msg.attach(attachment)
+                logger.info(f"Successfully attached file to email: {name}")
+            except:
+                logger.error(f"An exception was encountered when attaching file to email: {name}")
         else:
             logger.info("No CSV file was attached for this run")
         return msg
