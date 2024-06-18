@@ -10,16 +10,13 @@ IMG           := $(REGISTRY)/$(APP)
 IMG_VERSIONED := $(IMG):$(BUILD)
 IMG_LATEST    := $(IMG):latest
 
-.PHONY: push build version cleanbuild
+.PHONY: push build
 
 push: build
 	docker push $(IMG_VERSIONED)
 	docker push $(IMG_LATEST)
 
-build: version
-	docker buildx build --platform linux/amd64 -t $(IMG_VERSIONED) . || docker build -t $(IMG_VERSIONED) .
+build:
+	docker buildx build --platform linux/amd64 --no-cache -t $(IMG_VERSIONED) . || docker build --no-cache -t $(IMG_VERSIONED) .
 	docker tag $(IMG_VERSIONED) $(IMG_LATEST)
 	docker save $(IMG_VERSIONED) | gzip > $(DIR)/$(REGISTRY)-$(APP):$(BUILD).tar.gz
-
-cleanbuild:
-	docker buildx build --platform linux/amd64 --no-cache -t $(IMG_VERSIONED) .
