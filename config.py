@@ -31,11 +31,10 @@ COLS = ["Name", "Folder", "Type", "Url", "GSTT_dir", "subdir"]
 RUNTYPE_IDENTIFIERS = {
     "WES": {"present": ["WES", "NGS"], "absent": []},
     "CustomPanels": {"present": ["NGS"], "absent": ["WES"]},
-    "LRPCR": {"present": ["LRPCR"], "absent": []},
     "SNP": {"present": ["SNP"], "absent": []},
     "TSO500": {"present": ["TSO"], "absent": []},
     "ArcherDX": {"present": ["ADX"], "absent": []},
-    "SWIFT": {"present": ["ONC"], "absent": []},
+    "OncoDEEP": {"present": ["OKD"], "absent": []},
 }
 
 PER_RUNTYPE_DOWNLOADS = {
@@ -45,31 +44,28 @@ PER_RUNTYPE_DOWNLOADS = {
             "regex": r"\S+.chanjo_txt$",
         }
     },
-    **dict.fromkeys(
-        ["CustomPanels", "LRPCR"],
-        {
-            "exon_level_coverage": {
-                "folder": "/coverage",
-                "regex": r"\S+.exon_level.txt$",
-            },
-            "rpkm": {
-                "folder": "/conifer_output",
-                "regex": r"combined_bed_summary\S+",
-            },
-            "fh_prs": {
-                "folder": "/PRS_output",
-                "regex": r"\S+.txt$",
-            },
-            "polyedge": {
-                "folder": "/polyedge",
-                "regex": r"\S+_polyedge.pdf$",
-            },
-            "exomedepth": {
-                "folder": "/exomedepth_output",
-                "regex": r"\S+_output.pdf$",
-            },
+    "CustomPanels": {
+        "exon_level_coverage": {
+            "folder": "/coverage",
+            "regex": r"\S+.exon_level.txt$",
         },
-    ),
+        "rpkm": {
+            "folder": "/conifer_output",
+            "regex": r"combined_bed_summary\S+",
+        },
+        "fh_prs": {
+            "folder": "/PRS_output",
+            "regex": r"\S+.txt$",
+        },
+        "polyedge": {
+            "folder": "/polyedge",
+            "regex": r"\S+_polyedge.pdf$",
+        },
+        "exomedepth": {
+            "folder": "/exomedepth_output",
+            "regex": r"\S+_output.pdf$",
+        },
+    },
     "SNP": {
         "vcf": {
             "folder": "/output",
@@ -94,7 +90,7 @@ PER_RUNTYPE_DOWNLOADS = {
             "regex": r"^MetricsOutput\S*.tsv$",
         },
     },
-    **dict.fromkeys(["ArcherDX", "SWIFT"], False),
+    **dict.fromkeys(["ArcherDX", "OncoDEEP"], False),
 }
 
 P_BIOINF_TESTING = "P:/Bioinformatics/testing/process_duty_csv"
@@ -108,36 +104,33 @@ GSTT_PATHS = {
                 "subdir": None,
             }
         },
-        **dict.fromkeys(
-            ["CustomPanels", "LRPCR"],
-            {
-                "exon_level_coverage": {
-                    "Via": f"{P_BIOINF_TESTING}/CustomPanels/%s%s/",
-                    "StG": f"{P_BIOINF_TESTING}/StG/%s/",
-                    "subdir": r"coverage/",
-                },
-                "rpkm": {
-                    "Via": f"{P_BIOINF_TESTING}/CustomPanels/%s%s/",
-                    "StG": f"{P_BIOINF_TESTING}/StG/%s/",
-                    "subdir": r"RPKM/",
-                },
-                "fh_prs": {
-                    "Via": f"{P_BIOINF_TESTING}/CustomPanels/%s%s/",
-                    "StG": f"{P_BIOINF_TESTING}/StG/%s/",
-                    "subdir": r"FH_PRS/",
-                },
-                "polyedge": {
-                    "Via": f"{P_BIOINF_TESTING}/CustomPanels/%s%s/",
-                    "StG": f"{P_BIOINF_TESTING}/StG/%s/",
-                    "subdir": r"polyedge/",
-                },
-                "exomedepth": {
-                    "Via": f"{P_BIOINF_TESTING}/CustomPanels/%s%s/",
-                    "StG": f"{P_BIOINF_TESTING}/StG/%s/",
-                    "subdir": r"exomedepth/",
-                },
+        "CustomPanels": {
+            "exon_level_coverage": {
+                "Via": f"{P_BIOINF_TESTING}/CustomPanels/%s%s/",
+                "StG": f"{P_BIOINF_TESTING}/StG/%s/",
+                "subdir": r"coverage/",
             },
-        ),
+            "rpkm": {
+                "Via": f"{P_BIOINF_TESTING}/CustomPanels/%s%s/",
+                "StG": f"{P_BIOINF_TESTING}/StG/%s/",
+                "subdir": r"RPKM/",
+            },
+            "fh_prs": {
+                "Via": f"{P_BIOINF_TESTING}/CustomPanels/%s%s/",
+                "StG": f"{P_BIOINF_TESTING}/StG/%s/",
+                "subdir": r"FH_PRS/",
+            },
+            "polyedge": {
+                "Via": f"{P_BIOINF_TESTING}/CustomPanels/%s%s/",
+                "StG": f"{P_BIOINF_TESTING}/StG/%s/",
+                "subdir": r"polyedge/",
+            },
+            "exomedepth": {
+                "Via": f"{P_BIOINF_TESTING}/CustomPanels/%s%s/",
+                "StG": f"{P_BIOINF_TESTING}/StG/%s/",
+                "subdir": r"exomedepth/",
+            },
+        },
         "SNP": {
             "vcf": {
                 "Via": f"{P_BIOINF_TESTING}/SNP/VCFs_Andrew/",
@@ -177,36 +170,33 @@ GSTT_PATHS = {
                 "subdir": None,
             },
         },
-        **dict.fromkeys(
-            ["CustomPanels", "LRPCR"],
-            {
-                "exon_level_coverage": {
-                    "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
-                    "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s/",
-                    "subdir": r"coverage/",
-                },
-                "rpkm": {
-                    "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
-                    "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s/",
-                    "subdir": r"RPKM/",
-                },
-                "fh_prs": {
-                    "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
-                    "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s/",
-                    "subdir": r"FH_PRS/",
-                },
-                "polyedge": {
-                    "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
-                    "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s/",
-                    "subdir": r"polyedge/",
-                },
-                "exomedepth": {
-                    "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
-                    "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s/",
-                    "subdir": r"exomedepth/",
-                },
+        "CustomPanels": {
+            "exon_level_coverage": {
+                "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
+                "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s/",
+                "subdir": r"coverage/",
             },
-        ),
+            "rpkm": {
+                "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
+                "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s/",
+                "subdir": r"RPKM/",
+            },
+            "fh_prs": {
+                "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
+                "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s/",
+                "subdir": r"FH_PRS/",
+            },
+            "polyedge": {
+                "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
+                "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s/",
+                "subdir": r"polyedge/",
+            },
+            "exomedepth": {
+                "Via": "P:/DNA LAB/Current/NGS worksheets/%s%s/",
+                "StG": "P:/DNA LAB/StG SFTP/StG SFTP outgoing/%s/",
+                "subdir": r"exomedepth/",
+            },
+        },
         "SNP": {
             "vcf": {
                 "Via": "P:/Bioinformatics/VCFs_Andrew/",
@@ -235,7 +225,7 @@ GSTT_PATHS = {
                 "StG": False,
                 "subdir": r"metrics/",
             },
-            **dict.fromkeys(["ArcherDX", "SWIFT"], False),
+            **dict.fromkeys(["ArcherDX", "OncoDEEP"], False),
         },
     },
 }
