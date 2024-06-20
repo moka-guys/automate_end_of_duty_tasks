@@ -2,7 +2,15 @@
 
 This repository processes DNAnexus runfolders, identifying those requiring download to the GSTT network.
 
-The script supports all runtypes. For those runtypes that have downstream outputs requiring download onto the GSTT network, it will generate a CSV file containing URLs for the files requiring download, and attach the CSV file to an email containing instructions on how to download the files to the GSTT network. For those runtypes with no downstream outputs, an email will still be sent but no CSV file will be attached. The email is sent to the bioinformatics shared inbox. Run types are defined in the configuration file.
+The script supports all runtypes. For those runtypes that have downstream outputs requiring download onto the GSTT network, it will generate a CSV and text file containing URLs for the files requiring download, and attach the CSV and text file to an email containing instructions on how to download the files to the GSTT network. For those runtypes with no downstream outputs, an email will still be sent but no CSV or text file will be attached. The email is sent to the bioinformatics shared inbox. Run types are defined in the configuration file.
+
+Currently supports the following run types:
+* ArcherDX
+* OncoDEEP
+* TSO500
+* WES
+* SNP
+* Custom Panels
 
 ## Running the script
 
@@ -42,6 +50,7 @@ export DX_API_TOKEN=$DNANEXUS_AUTH_TOKEN
 The script can then be run as follows:
 
 ```bash
+export DX_API_TOKEN=$TOKEN
 python3 duty_csv.py [-h] -P PROJECT_NAME -I PROJECT_ID -EU EMAIL_USER -PW EMAIL_PW -TP TSO_PANNUMBERS
                    [TSO_PANNUMBERS ...] -SP STG_PANNUMBERS [STG_PANNUMBERS ...] -CP CP_CAPTURE_PANNOS
                    [CP_CAPTURE_PANNOS ...] [-T]
@@ -57,8 +66,9 @@ It is important that any changes to this script are fully tested for integration
 
 ## Outputs
 
-The script has 3 file outputs:
+The script has 4 file outputs:
 * CSV file - contains information required by the [process_duty_csv](https://github.com/moka-guys/Automate_Duty_Process_CSV) script to download the required files output by the pipeline from DNAnexus to the required locations on the GSTT network
+* TXT file - contains commands that can be run in powershell to download the files via Chrome
 * HTML file - this file is the HTMl that is used as the email message contents
 * Log file - contains all log messages from running the script
 
@@ -73,7 +83,7 @@ sudo make build
 The docker image can be run as follows, making sure to supply the DNAnexus authentication token as an environment variable:
 
 ```bash
-sudo docker run -e DX_API_TOKEN=$DNANEXUS_AUTH_TOKEN -v $PATH_TO_OUTPUTS:/outputs seglh/duty_csv:$TAG [-h] -P PROJECT_NAME -I PROJECT_ID -EU EMAIL_USER -PW EMAIL_PW -TP TSO_PANNUMBERS -SP STG_PANNUMBERS -CP CP_CAPTURE_PANNOS
+sudo docker run --rm -e DX_API_TOKEN=$DNANEXUS_AUTH_TOKEN -v $PATH_TO_OUTPUTS:/outputs seglh/duty_csv:$TAG [-h] -P PROJECT_NAME -I PROJECT_ID -EU EMAIL_USER -PW EMAIL_PW -TP TSO_PANNUMBERS -SP STG_PANNUMBERS -CP CP_CAPTURE_PANNOS
 ```
 
 The current and all previous versions of the tool are stored as dockerised versions in 001_ToolsReferenceData project as .tar.gz files.

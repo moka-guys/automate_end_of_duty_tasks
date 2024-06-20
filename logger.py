@@ -24,9 +24,7 @@ class Logger(object):
             Return a Python logging object
     """
 
-    _formatter = logging.Formatter(
-        config.LOGGING_FORMATTER
-    )  # Log string format
+    _formatter = logging.Formatter(config.LOGGING_FORMATTER)  # Log string format
 
     def __init__(self, logfile_path: str):
         """

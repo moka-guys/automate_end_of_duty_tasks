@@ -56,6 +56,9 @@ class GenerateOutput:
             Create a url for a file in DNAnexus
         create_csv()
             Write dataframe to CSV, and return CSV format as string
+        create_chrome_download_cmds()
+            Creates a text file containing downloads that can be run to download the files via chrome,
+            to be used in case the powershell script does not work over citrix / VPN
         get_filetype_html()
             Generate HTML for files by filetype
         get_number_of_files()
@@ -100,15 +103,17 @@ class GenerateOutput:
         self.email_recipient = config.EMAIL_RECIPIENT[self.script_mode]
         self.project_jobs = self.get_jobs()
         self.csvfile_name = (
-            f"{self.project_name}.{self.project_id}.{self.runtype}"
-            f".duty_csv.csv"
+            f"{self.project_name}.{self.project_id}.{self.runtype}.duty_csv.csv"
         )
         self.htmlfile_name = (
-            f"{self.project_name}.{self.project_id}.{self.runtype}"
-            f".duty_csv.html"
+            f"{self.project_name}.{self.project_id}.{self.runtype}.duty_csv.html"
+        )
+        self.txtfile_name = (
+            f"{self.project_name}.{self.project_id}.{self.runtype}.duty_csv.txt"
         )
         self.csvfile_path = os.path.join(os.getcwd(), self.csvfile_name)
         self.htmlfile_path = os.path.join(os.getcwd(), self.htmlfile_name)
+        self.txtfile_path = os.path.join(os.getcwd(), self.txtfile_name)
         self.template = jinja2.Environment(
             loader=jinja2.FileSystemLoader(config.TEMPLATE_DIR),
             autoescape=True,
@@ -121,6 +126,7 @@ class GenerateOutput:
         self.data_obj_dict, self.data_num_dict = self.get_data_dicts()
         self.url_dataframe = self.create_url_dataframe()
         self.csv_contents = self.create_csv()
+        self.txt_contents = self.create_chrome_download_cmds()
         self.filetype_html = self.get_filetype_html()
         self.number_of_files = self.get_number_of_files()
         self.html = self.generate_email_html()
@@ -138,21 +144,18 @@ class GenerateOutput:
         for runtype in config.RUNTYPE_IDENTIFIERS:
             if all(
                 identifier in self.project_name
-                for identifier in config.RUNTYPE_IDENTIFIERS[runtype][
-                    "present"
-                ]
+                for identifier in config.RUNTYPE_IDENTIFIERS[runtype]["present"]
             ) and all(
                 identifier not in self.project_name
                 for identifier in config.RUNTYPE_IDENTIFIERS[runtype]["absent"]
             ):
                 project_runtype = runtype
         if project_runtype:
-            logger.info("This run is a %s run", project_runtype)
+            logger.info(f"This run is a {project_runtype} run")
             return project_runtype
         else:
             logger.error(
-                "Runtype in runfolder name does not "
-                "match config-defined runtypes"
+                "Runtype in runfolder name does not match config-defined runtypes"
             )
             sys.exit(1)
 
@@ -172,15 +175,12 @@ class GenerateOutput:
                 state = job.get("describe").get("state")
                 states.append(state)
             logger.info(
-                "%s jobs were identified in the DNAnexus project",
-                len(project_jobs),
+                f"{len(project_jobs)} jobs were identified in the DNAnexus project"
             )
             return project_jobs
         except Exception as exception:
             logger.error(
-                "There was a problem identifying jobs "
-                "in the DNAnexus project: %s",
-                exception,
+                f"There was a problem identifying jobs in the DNAnexus project: {exception}"
             )
             sys.exit(1)
 
@@ -196,8 +196,7 @@ class GenerateOutput:
         """
         if self.file_dict:
             logger.info(
-                "The config defines that this run should "
-                "have files for download"
+                "The config defines that this run should have files for download"
             )
             data_obj_dict = {}
             data_num_dict = {}
@@ -217,14 +216,12 @@ class GenerateOutput:
                 )
                 try:
                     data_num = len(data_obj_dict[filetype])
-                    logger.info(
-                        "The number of items for %s is %s", filetype, data_num
-                    )
+                    logger.info(f"The number of items for {filetype} is {data_num}")
                     data_num_dict[filetype] = data_num
                 except Exception:
                     logger.error(
                         "No data requiring download was found for "
-                        "the following file type: %s"
+                        f"the following file type: {exception}"
                     )
                     sys.exit(1)
             return data_obj_dict, data_num_dict
@@ -245,9 +242,7 @@ class GenerateOutput:
         if self.data_obj_dict:
             try:
                 logger.info(
-                    "Creating urls dataframe for %s project: %s",
-                    self.runtype,
-                    self.project_name,
+                    f"Creating urls dataframe for {self.runtype} project: {self.project_name}"
                 )
                 # Load into dataframe, explode so rows with more than one trust
                 # dir are split into distinct rows, sort values by sample name
@@ -265,17 +260,13 @@ class GenerateOutput:
                 )
                 dataframe.index += 1  # Start sample numbering from 1
                 logger.info(
-                    "Created urls dataframe for %s project: %s",
-                    self.runtype,
-                    self.project_name,
+                    f"Created urls dataframe for {self.runtype} project: {self.project_name}"
                 )
                 return dataframe
 
             except Exception as exception:
                 logger.error(
-                    "An error was encountered when creating the urls "
-                    "dataframe: %s",
-                    exception,
+                    f"An error was encountered when creating the urls dataframe: {exception}",
                 )
                 sys.exit(1)
         else:
@@ -293,9 +284,9 @@ class GenerateOutput:
         try:
             attrs_list = []
             for filetype in self.data_obj_dict:
-                subdir = config.GSTT_PATHS[self.script_mode][self.runtype][
-                    filetype
-                ]["subdir"]
+                subdir = config.GSTT_PATHS[self.script_mode][self.runtype][filetype][
+                    "subdir"
+                ]
                 for data_obj in self.data_obj_dict[filetype]:
                     file_name = data_obj.get("describe").get("name")
                     folder = data_obj.get("describe").get("folder")
@@ -309,8 +300,7 @@ class GenerateOutput:
         except Exception as exception:
             logger.error(
                 "An exception was encountered when building the urls "
-                "attributes list, with exception: %s",
-                exception,
+                f"attributes list, with exception: {exception}",
             )
             sys.exit(1)
 
@@ -327,34 +317,28 @@ class GenerateOutput:
         try:
             if any(pannumber in url for pannumber in self.stg_pannumbers):
                 trust_dirs.append(
-                    config.GSTT_PATHS[self.script_mode][self.runtype][
-                        filetype
-                    ]["StG"]
+                    config.GSTT_PATHS[self.script_mode][self.runtype][filetype]["StG"]
                 )
             elif any(pannumber in url for pannumber in self.cp_capture_pannos):
                 trust_dirs.extend(
                     (
-                        config.GSTT_PATHS[self.script_mode][self.runtype][
-                            filetype
-                        ]["StG"],
-                        config.GSTT_PATHS[self.script_mode][self.runtype][
-                            filetype
-                        ]["Via"],
+                        config.GSTT_PATHS[self.script_mode][self.runtype][filetype][
+                            "StG"
+                        ],
+                        config.GSTT_PATHS[self.script_mode][self.runtype][filetype][
+                            "Via"
+                        ],
                     )
                 )
             else:
                 trust_dirs.append(
-                    config.GSTT_PATHS[self.script_mode][self.runtype][
-                        filetype
-                    ]["Via"]
+                    config.GSTT_PATHS[self.script_mode][self.runtype][filetype]["Via"]
                 )
             return trust_dirs
         except Exception as exception:
             logger.error(
-                "Could not return trust directory list for url %s, "
-                "with exception: %s",
-                url,
-                exception,
+                f"Could not return trust directory list for url {url}, "
+                f"with exception: {exception}",
             )
             sys.exit(1)
 
@@ -366,21 +350,16 @@ class GenerateOutput:
         dxfile = dxpy.DXFile(file_id)
         try:
             url = dxfile.get_download_url(
-                duration=60
-                * 60
-                * 24
-                * 5,  # 60 sec x 60 min x 24 hours * 5 days
+                duration=60 * 60 * 24 * 5,  # 60 sec x 60 min x 24 hours * 5 days
                 preauthenticated=True,
                 project=project_id,
                 filename=file_name,
             )[0]
-            logger.info("Url for %s retrieved successfully", dxfile)
+            logger.info(f"Url for {dxfile} retrieved successfully")
             return url
         except Exception as exception:
             logger.error(
-                "Could not retrieve url for file %s, with exception: %s",
-                dxfile,
-                exception,
+                f"Could not retrieve url for file {dxfile}, with exception: {exception}"
             )
             sys.exit(1)
 
@@ -391,27 +370,54 @@ class GenerateOutput:
         """
         if self.url_dataframe is not None:
             logger.info(
-                "Creating csv file for %s project: %s",
-                self.runtype,
-                self.project_name,
+                f"Creating csv file for {self.runtype} project: {self.project_name}"
             )
             try:
                 # Write to file
                 self.url_dataframe.to_csv(self.csvfile_path, index=False)
                 # Save as variable
                 csv_contents = self.url_dataframe.to_csv(index=False)
-                logger.info("CSV file has been created: %s", self.csvfile_path)
+                logger.info(f"CSV file has been created: {self.csvfile_path}")
                 return csv_contents
 
             except Exception as exception:
                 logger.error(
                     "An error was encountered when writing the urls "
-                    "dataframe to CSV: %s",
-                    exception,
+                    f"dataframe to CSV: {exception}",
                 )
                 sys.exit(1)
         else:
             logger.info("No CSV file was created as no URL dataframe exists")
+
+    def create_chrome_download_cmds(self) -> str | None:
+        """
+        Creates a text file containing commands that can be run to download the files via chrome,
+        to be used in case the powershell script does not work over citrix / VPN
+            :return txt_contents (str): Return resulting TXT format as string
+        """
+        if self.url_dataframe is not None:
+            logger.info(
+                f"Creating chrome download commands file for {self.runtype} project: {self.project_name}"
+            )
+            try:
+                urls = "start chrome " + self.url_dataframe["Url"]
+                urls.drop_duplicates(inplace=True)
+                # Write to file
+                urls.to_csv(self.txtfile_path, index=False)
+                # Save as variable
+                txt_contents = urls.to_csv(index=False)
+                logger.info(f"TXT file has been created: {self.txtfile_path}")
+                return txt_contents
+
+            except Exception as exception:
+                logger.error(
+                    f"An error was encountered when writing the chrome downloads commands to text file: {exception}"
+                )
+                sys.exit(1)
+        else:
+            logger.info(
+                "No chrome download command file was created as no URL dataframe exists"
+            )
 
     def get_filetype_html(self) -> str:
         """
@@ -423,16 +429,13 @@ class GenerateOutput:
             try:
                 for filetype in self.data_num_dict:
                     filetype_html += (
-                        f"{self.data_num_dict[filetype]} "
-                        f"{filetype} files<br>"
+                        f"{self.data_num_dict[filetype]} {filetype} files<br>"
                     )
                 logger.info("Filetype HTML successfully generated")
                 return filetype_html
             except Exception as exception:
                 logger.error(
-                    "There was an exception when generating the "
-                    "filetype html: %s",
-                    exception,
+                    f"There was an exception when generating the filetype html: {exception}"
                 )
                 sys.exit(1)
         else:
@@ -449,8 +452,7 @@ class GenerateOutput:
         if self.data_num_dict:
             number_of_files = sum(self.data_num_dict.values())
             logger.info(
-                "%s files were identified for download for this project",
-                number_of_files,
+                f"{number_of_files} files were identified for download for this project"
             )
             # If there are no files and files were expected from this runtype
             if number_of_files == 0 and self.file_dict:
@@ -472,7 +474,6 @@ class GenerateOutput:
         Generate HTML
             :return html (str): Rendered html as a string
         """
-        # If the runfolder has files that need download
         try:
             html = self.template.render(
                 runtype=self.runtype,
@@ -491,8 +492,7 @@ class GenerateOutput:
         except Exception as exception:
             logger.error(
                 "There was a problem generating the html file, with "
-                "the following exception: %s",
-                exception,
+                f"the following exception: {exception}",
             )
             sys.exit(1)
 
@@ -509,14 +509,26 @@ class GenerateOutput:
         msg["From"] = config.EMAIL_SENDER
         msg["To"] = self.email_recipient
         msg.attach(MIMEText(self.html, "html"))
+        logger.info("HTML email message attached")
+        msg = self.attach_file(self.csv_contents, self.csvfile_name, msg)
+        msg = self.attach_file(self.txt_contents, self.txtfile_name, msg)
+        return msg
 
+    def attach_file(self, contents, name, msg) -> None:
+        """
+        Attach file to email
+            :param contents:        Contents of file attachment
+            :param name (str):      Name of file
+            :param msg (object):    Message object for email
+        """
         if self.csv_contents:
-            attachment = MIMEApplication(self.csv_contents)
-            attachment["Content-Disposition"] = (
-                f"attachment; " f'filename="{self.csvfile_name}"'
-            )
-            msg.attach(attachment)
-            logger.info("Successfully created email message")
+            try:
+                attachment = MIMEApplication(contents)
+                attachment["Content-Disposition"] = f'attachment; filename="{name}"'
+                msg.attach(attachment)
+                logger.info(f"Successfully attached file to email: {name}")
+            except:
+                logger.error(f"An exception was encountered when attaching file to email: {name}")
         else:
             logger.info("No CSV file was attached for this run")
         return msg
@@ -527,9 +539,7 @@ class GenerateOutput:
         """
         try:
             # Configure SMTP server connection for sending log msgs via e-mail
-            server = smtplib.SMTP(
-                host=config.HOST, port=config.PORT, timeout=10
-            )
+            server = smtplib.SMTP(host=config.HOST, port=config.PORT, timeout=10)
 
             # Verbosity turned off - set to true to get debug messages
             server.set_debuglevel(False)
@@ -542,15 +552,11 @@ class GenerateOutput:
                 self.email_recipient,
                 self.email_msg.as_string(),
             )
-            logger.info(
-                "CSV file has been emailed to %s",
-                self.email_recipient,
-            )
+            logger.info(f"CSV file has been emailed to {self.email_recipient}")
         except Exception as exception:
             logger.error(
                 "There was a problem sending the email, with "
-                "the following exception: %s",
-                exception,
+                f"the following exception: {exception}",
             )
             sys.exit(1)
 
@@ -563,8 +569,10 @@ def arg_parse() -> dict:
         :return (dict): Parsed command line attributes
     """
     parser = argparse.ArgumentParser(
-        description="Generate a CSV file containing links for downloading "
-        "files from that runfolder for end-of-duty tasks"
+        description=(
+            "Generate a CSV file containing links for downloading "
+            "files from that runfolder for end-of-duty tasks"
+        )
     )
     requirednamed = parser.add_argument_group("Required named arguments")
     requirednamed.add_argument(
@@ -635,27 +643,23 @@ def update_tso_config_regex(tso_pannumbers: list) -> None:
     Update config TSO500 regex incorporating command-line parsed Pan numbers
     """
     logger.info(
-        "Updating TSO500 regex with the following pan numbers:  %s",
-        tso_pannumbers,
+        f"Updating TSO500 regex with the following pan numbers: {tso_pannumbers}",
     )
     try:
         for filetype in [
             "gene_level_coverage",
             "exon_level_coverage",
         ]:
-            config.PER_RUNTYPE_DOWNLOADS["TSO500"][filetype][
-                "regex"
-            ] = config.PER_RUNTYPE_DOWNLOADS["TSO500"][filetype][
-                "regex"
-            ].format(
-                ("|").join(tso_pannumbers)
+            config.PER_RUNTYPE_DOWNLOADS["TSO500"][filetype]["regex"] = (
+                config.PER_RUNTYPE_DOWNLOADS["TSO500"][filetype]["regex"].format(
+                    ("|").join(tso_pannumbers)
+                )
             )
 
     except Exception as exception:
         logger.info(
             "The following error was encountered when trying to update the"
-            "TSO500 regex: %s",
-            exception,
+            f"TSO500 regex: {exception}",
         )
         sys.exit(1)
 
@@ -667,7 +671,7 @@ def git_tag() -> str:
                                 with newline characters removed
     """
     filepath = os.path.dirname(os.path.realpath(__file__))
-    cmd = f"git -C {filepath} describe --tags"
+    cmd = f"git -C {filepath} describe --tags --always --dirty"
 
     proc = subprocess.Popen(
         [cmd], stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True
@@ -684,7 +688,7 @@ if __name__ == "__main__":
         f"{args['project_name']}.{args['project_id']}.duty_csv.log",
     )
     logger = Logger(logfile_path).logger
-    logger.info("Running duty_csv %s", git_tag())
+    logger.info(f"Running duty_csv {git_tag()}")
 
     # Read access token from environment
     try:
@@ -704,12 +708,10 @@ if __name__ == "__main__":
         token = os.environ["DX_API_TOKEN"]
         whoami = dxpy.api.system_whoami()
     except Exception as exception:
-        logger.error(
-            "Unable to authenticate with DNAnexus API: %s", str(exception)
-        )
+        logger.error(f"Unable to authenticate with DNAnexus API: {str(exception)}")
         sys.exit(1)
     else:
-        logger.info("Authenticated as %s", whoami)
+        logger.info(f"Authenticated as {whoami}")
 
     # Update PER_RUNTYPE_DOWNLOADS for TSO runs with Pan number regex
     update_tso_config_regex(args["tso_pannumbers"])
@@ -719,7 +721,7 @@ if __name__ == "__main__":
     else:
         SCRIPT_MODE = "PROD"
 
-    logger.info("Script is being run in %s mode", SCRIPT_MODE)
+    logger.info(f"Script is being run in {SCRIPT_MODE} mode")
 
     GenerateOutput(
         args["project_name"],
