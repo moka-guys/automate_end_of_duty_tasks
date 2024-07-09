@@ -35,6 +35,7 @@ RUNTYPE_IDENTIFIERS = {
     "TSO500": {"present": ["TSO"], "absent": []},
     "ArcherDX": {"present": ["ADX"], "absent": []},
     "OncoDEEP": {"present": ["OKD"], "absent": []},
+    "DEV": {"present": ["DEV"], "absent": []},
 }
 
 PER_RUNTYPE_DOWNLOADS = {
@@ -90,7 +91,7 @@ PER_RUNTYPE_DOWNLOADS = {
             "regex": r"^MetricsOutput\S*.tsv$",
         },
     },
-    **dict.fromkeys(["ArcherDX", "OncoDEEP"], False),
+    **dict.fromkeys(["ArcherDX", "OncoDEEP", "DEV"], False),
 }
 
 P_BIOINF_TESTING = "P:/Bioinformatics/testing/process_duty_csv"
@@ -160,7 +161,7 @@ GSTT_PATHS = {
                 "subdir": r"metrics/",
             },
         },
-        **dict.fromkeys(["ArcherDX", "ONC"], False),
+        **dict.fromkeys(["ArcherDX", "ONC", "DEV"], False),
     },
     "PROD": {
         "WES": {
@@ -225,7 +226,7 @@ GSTT_PATHS = {
                 "StG": False,
                 "subdir": r"metrics/",
             },
-            **dict.fromkeys(["ArcherDX", "OncoDEEP"], False),
+            **dict.fromkeys(["ArcherDX", "OncoDEEP", "DEV"], False),
         },
     },
 }

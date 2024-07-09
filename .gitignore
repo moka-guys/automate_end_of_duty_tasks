@@ -6,3 +6,4 @@ project*
 *.csv
 *.html
 *.log
+*.duty_csv.txt
