@@ -11,6 +11,7 @@ Currently supports the following run types:
 * WES
 * SNP
 * Custom Panels
+* Development Runs
 
 ## Running the script
 
